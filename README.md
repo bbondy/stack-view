@@ -1,2 +1,2 @@
-# stackl10n
+# stack-view
 StackOverflow analysis
