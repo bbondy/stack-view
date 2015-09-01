@@ -1,0 +1,19 @@
+{
+  "name": "stackl10n",
+  "version": "0.0.1",
+  "description": "StackOverflow analysis",
+  "main": "dist/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bbondy/stackl10n.git"
+  },
+  "author": "Brian R. Bondy <netzen@gmail.com> (http://www.brianbondy.com)",
+  "license": "MPL-2.0",
+  "bugs": {
+    "url": "https://github.com/bbondy/stackl10n/issues"
+  },
+  "homepage": "https://github.com/bbondy/stackl10n#readme"
+}
