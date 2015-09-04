@@ -1,27 +1,38 @@
 var fs = require('fs');
+import {initRedis, uninitRedis, addUser, addQuestion, addAnswer} from './datastore.js';
 var strict = true;
 
-let parseFile = (filePath, openTag) => {
-  var saxStream = require('sax').createStream(strict, {})
-    saxStream.on('error', function (e) {
-    // unhandled errors will throw, since this is a proper node
-    // event emitter.
-    console.error('error!', e)
-    // clear the error
-    this._parser.error = null
-    this._parser.resume()
-  });
+initRedis();
 
-  saxStream.on('opentag', function (node) {
-    let data = openTag(node);
-    console.log(data);
+let parseFile = (filePath, onOpenTag) => {
+  return new Promise((resolve, reject) => {
+    var saxStream = require('sax').createStream(strict, {})
+    saxStream.on('error', (e) => {
+      // unhandled errors will throw, since this is a proper node
+      // event emitter.
+      console.error('error!', e)
+      // clear the error
+      //this._parser.error = null
+      //this._parser.resume()
+      reject(e);
+    });
+
+    saxStream.on('opentag', (node) => {
+      onOpenTag(node);
+    });
+
+    saxStream.on('end', () => {
+      // parser stream is done, and ready to have more stuff written to it.
+      resolve();
+    });
+
+    fs.createReadStream(filePath)
+      .pipe(saxStream);
   });
-  fs.createReadStream(filePath)
-    .pipe(saxStream);
 };
 
 export let parseUsers = parseFile.bind(null, 'Users.xml', (node) => {
-  return {
+  let user = {
     id: node.attributes.Id,
     reputation: Number(node.attributes.Reputation),
     creationdate: new Date(node.attributes.CreationDate),
@@ -38,6 +49,9 @@ export let parseUsers = parseFile.bind(null, 'Users.xml', (node) => {
     profileImageUrl: node.attributes.ProfileImageUrl,
     age: node.attributes.age,
   };
+  addUser(user.id, user).catch((err) => {
+      console.log(`Could not add user id: ${id}`);
+  });
 });
 
 export let parsePosts = parseFile.bind(null, 'Posts.xml', (node) => {
@@ -64,8 +78,17 @@ export let parsePosts = parseFile.bind(null, 'Posts.xml', (node) => {
 
   if (data.postTypeId === 1) {
     data.acceptedAnswerId = node.attributes.AcceptedAnswerId;
+      addQuestion(data.id, data).catch((err) => {
+      console.log(`Could not add questionid: ${data.id}: ${err}`);
+    });
   } else if (data.postTypeId === 2) {
-    data.parentId = node.attributes.ParentID;
+    data.parentId = node.attributes.ParentId;
+    addAnswer(data.parentId, data).catch((err) => {
+      console.log(`Could not add answer for question: ${data.parentId}: ${err}`);
+    });
   }
-  return data;
+});
+
+Promise.all([parseUsers(), parsePosts()]).then(() => {
+  uninitRedis();
 });

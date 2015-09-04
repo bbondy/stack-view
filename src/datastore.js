@@ -1,7 +1,7 @@
 let redis = require('redis');
 
 let redisClient;
-export function initRedis(port = 19278) {
+export function initRedis(port = 19279) {
   redisClient = redis.createClient(port);
   redisClient.on('error', function (err) {
     console.error('DB: Error ' + err);
@@ -125,7 +125,7 @@ export function getUser(userId) {
  * Adds the specified answer to the DB to the location answers:{questionId}
  */
 export function addAnswer(questionId, answer) {
-  return pushToList(`comments:${questionId}`, comment);
+  return pushToList(`comments:${questionId}`, answer);
 }
 
 /**
