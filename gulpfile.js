@@ -13,6 +13,7 @@ var babelify = require('babelify');
 var uglify = require('gulp-uglify');
 var source = require('vinyl-source-stream');
 var buffer = require('vinyl-buffer');
+var extname = require('gulp-extname');
 
 const SRC_ROOT = './src/';
 const SRC_ROOT_PUBLIC = './src/public/';
@@ -28,6 +29,9 @@ const SERVER_FILES = [
   SRC_ROOT + 'datastore.js',
   SRC_ROOT + 'server.js',
   SRC_ROOT + 'secrets.js',
+];
+const JSX_SERVER_FILES = [
+  SRC_ROOT + '**/*.jsx',
 ];
 
 const COPY_SERVER_FILES = [
@@ -46,7 +50,7 @@ gulp.task('start-server', function () {
  * Runs linters on all javascript files found in the src dir.
  */
 gulp.task('lint-node', function() {
-  return gulp.src(SERVER_FILES)
+  return gulp.src(SERVER_FILES.concat(JSX_SERVER_FILES))
     .pipe(eslint())
     .pipe(eslint.format())
     .pipe(gutil.noop());
@@ -104,7 +108,8 @@ gulp.task('babel-node', function() {
   try {
     return gulp.src(SERVER_FILES)
       .pipe(IS_PRODUCTION ? gutil.noop() : sourcemaps.init())
-      .pipe(babel().on('error', function(e) {
+      .pipe(babel()
+        .on('error', function(e) {
         console.log('error on babel-node: ' + e);
         this.emit('end');
       }))
@@ -117,17 +122,39 @@ gulp.task('babel-node', function() {
 });
 
 /**
+ * Converts javascript to es5. This allows us to use harmony classes and modules.
+ */
+gulp.task('babel-node-jsx', function() {
+  try {
+    return gulp.src(JSX_SERVER_FILES)
+      .pipe(IS_PRODUCTION ? gutil.noop() : sourcemaps.init())
+      .pipe(babel()
+        .on('error', function(e) {
+        console.log('error on babel-node: ' + e);
+        this.emit('end');
+      }))
+      .pipe(extname('.jsx'))
+      .pipe(IS_PRODUCTION ? gutil.noop() : sourcemaps.write('.'))
+      .pipe(gulp.dest(DIST_ROOT));
+
+  } catch (e) {
+    console.log('Got error in babel', e);
+  }
+});
+
+
+/**
  * Build the app.
  */
 gulp.task('build', function(cb) {
-  runSequence(['copy-server-files', 'babel-node', 'lint-node', 'less'], cb);
+  runSequence(['copy-server-files', 'babel-node-jsx', 'babel-node', 'lint-node', 'less'], cb);
 });
 
 /**
  * Watch for changes on the file system, and rebuild if so.
  */
 gulp.task('watch', function() {
-  gulp.watch(SERVER_FILES, ['lint-node', 'babel-node', 'copy-server-files', server.restart]);
+  gulp.watch(SERVER_FILES, ['lint-node', 'babel-node-jsx', 'babel-node', 'copy-server-files', server.restart]);
 });
 
 

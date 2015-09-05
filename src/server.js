@@ -39,6 +39,27 @@ server.route({
 
 server.route({
   method: 'GET',
+  path: '/main',
+  handler: function(request, reply) {
+    var context = { title: 'Test Main.' };
+    var renderOpts = {
+      runtimeOptions: {
+      }
+    };
+    server.render('main', context, renderOpts, function (err, output) {
+      if (err) {
+        reply(err).code(500);
+        return;
+      }
+
+      reply(output).code(200);
+    });
+
+  }
+});
+
+server.route({
+  method: 'GET',
   path: '/question/{id}',
   handler: function(request, reply) {
     console.log('questions id: ' + request.params.id);
@@ -98,9 +119,12 @@ server.register([{
 });
 
 server.views({
-  engines: { jade: require('jade') },
-  path: Path.join(__dirname, 'templates'),
+  engines: {
+    jsx: require('hapi-react-views')
+  },
   compileOptions: {
     pretty: true
-  }
+  },
+  relativeTo: __dirname,
+  path: 'views'
 });
