@@ -1,8 +1,10 @@
 require('babel/polyfill');
 let Path = require('path');
 let Hapi = require('hapi');
-
+import {initRedis, getQuestion, getAnswers} from './datastore.js';
 import {cookiePassword} from './secrets.js';
+
+initRedis();
 
 let server = new Hapi.Server({
   connections: {
@@ -34,6 +36,37 @@ server.route({
     });
   }
 });
+
+server.route({
+  method: 'GET',
+  path: '/question/{id}',
+  handler: function(request, reply) {
+    console.log('questions id: ' + request.params.id);
+    getQuestion(request.params.id).then((question) => {
+      console.log('found is: ', question);
+      reply(question).code(200);
+    }).catch((err) => {
+      console.log('question error: !', err);
+    });
+  }
+});
+
+server.route({
+  method: 'GET',
+  path: '/question/{id}/answers',
+  handler: function(request, reply) {
+    console.log('questions id: ' + request.params.id);
+    getAnswers(request.params.id).then((answers) => {
+      console.log('found is: ', answers);
+      reply(answers).code(200);
+    }).catch((err) => {
+      console.log('question error: !', err);
+    });
+  }
+});
+
+
+
 
 server.register([{
   // good is a process monitor that listens for one or more of the below 'event types'

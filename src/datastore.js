@@ -34,7 +34,7 @@ function pushToList(key, obj) {
 /**
  * Removes an item from the specified list
  */
-function removeFromList(key, obj) {
+export function removeFromList(key, obj) {
   return new Promise((resolve, reject) => {
     redisClient.lrem(key, 1, JSON.stringify(obj), err => {
       if (err) {
