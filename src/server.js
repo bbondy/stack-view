@@ -65,9 +65,6 @@ server.route({
   }
 });
 
-
-
-
 server.register([{
   // good is a process monitor that listens for one or more of the below 'event types'
   register: require('good'),

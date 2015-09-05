@@ -8,6 +8,11 @@ var eslint = require('gulp-eslint');
 var less = require('gulp-less');
 var runSequence = require('run-sequence');
 var server = require( 'gulp-develop-server' );
+var browserify = require('browserify');
+var babelify = require('babelify');
+var uglify = require('gulp-uglify');
+var source = require('vinyl-source-stream');
+var buffer = require('vinyl-buffer');
 
 const SRC_ROOT = './src/';
 const SRC_ROOT_PUBLIC = './src/public/';
@@ -45,6 +50,24 @@ gulp.task('lint-node', function() {
     .pipe(eslint())
     .pipe(eslint.format())
     .pipe(gutil.noop());
+});
+
+/**
+ * Babilify all of the client side things
+ */
+gulp.task('bundle-js', function() {
+  browserify({
+    entries: './src/public/js/init.js',
+    debug: true
+  })
+  .transform(babelify)
+  .bundle()
+  .pipe(source('bundle.js'))
+  .pipe(buffer())
+  .pipe(IS_PRODUCTION ? sourcemaps.init({loadMaps: true}) : gutil.noop())
+  .pipe(IS_PRODUCTION ? uglify() : gutil.noop())
+  .pipe(IS_PRODUCTION ? sourcemaps.write('./') : gutil.noop())
+  .pipe(gulp.dest('./dist/public/js'));
 });
 
 /**
