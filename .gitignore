@@ -34,3 +34,5 @@ dist
 
 # Secrets file
 secrets.js
+config.js
+

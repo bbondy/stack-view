@@ -28,6 +28,7 @@ const SERVER_FILES = [
   SRC_ROOT + 'datastore.js',
   SRC_ROOT + 'server.js',
   SRC_ROOT + 'secrets.js',
+  SRC_ROOT + 'config.js',
   SRC_ROOT + '*views*/*.js',
 ];
 
