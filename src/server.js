@@ -39,33 +39,23 @@ server.route({
 
 server.route({
   method: 'GET',
-  path: '/main',
+  path: '/questions/{id}',
   handler: function(request, reply) {
-    var context = { title: 'Test Main.' };
-    var renderOpts = {
-      runtimeOptions: {
-      }
-    };
-    server.render('main', context, renderOpts, function (err, output) {
-      if (err) {
-        reply(err).code(500);
-        return;
-      }
-
-      reply(output).code(200);
-    });
-
-  }
-});
-
-server.route({
-  method: 'GET',
-  path: '/question/{id}',
-  handler: function(request, reply) {
-    console.log('questions id: ' + request.params.id);
-    getQuestion(request.params.id).then((question) => {
-      console.log('found is: ', question);
-      reply(question).code(200);
+    Promise.all([getQuestion(request.params.id), getAnswers(request.params.id)]).then((data) => {
+      let [question, answers] = data;
+      var context = {
+        title: 'Test Main.',
+        question,
+        answers,
+      };
+      var renderOpts = { runtimeOptions: {} };
+      server.render('main', context, renderOpts, function (err, output) {
+        if (err) {
+          reply(err).code(500);
+          return;
+        }
+        reply(output).code(200);
+      });
     }).catch((err) => {
       console.log('question error: !', err);
     });
@@ -74,11 +64,21 @@ server.route({
 
 server.route({
   method: 'GET',
-  path: '/question/{id}/answers',
+  path: '/api/questions/{id}',
   handler: function(request, reply) {
-    console.log('questions id: ' + request.params.id);
+    getQuestion(request.params.id).then((answers) => {
+      reply(answers).code(200);
+    }).catch((err) => {
+      console.log('question error: !', err);
+    });
+  }
+});
+
+server.route({
+  method: 'GET',
+  path: '/api/questions/{id}/answers',
+  handler: function(request, reply) {
     getAnswers(request.params.id).then((answers) => {
-      console.log('found is: ', answers);
       reply(answers).code(200);
     }).catch((err) => {
       console.log('question error: !', err);
