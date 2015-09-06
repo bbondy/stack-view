@@ -21,10 +21,8 @@ export function translate(text, from, to) {
   });
 }
 
-/*
-translate('hello world', 'en', 'de').then((text) => {
+translate('Is floating point math broken?', 'en', 'fr').then((text) => {
   console.log(text);
 }).catch((err) => {
   console.log('there was an error: ', err);
 });
-*/

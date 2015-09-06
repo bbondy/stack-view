@@ -120,7 +120,7 @@ server.register([{
 
 server.views({
   engines: {
-    jsx: require('hapi-react-views')
+    js: require('hapi-react-views')
   },
   compileOptions: {
     pretty: true
