@@ -1,8 +1,11 @@
 require('babel/polyfill');
 let Path = require('path');
 let Hapi = require('hapi');
+var Inert = require('inert');
 import {initRedis, getQuestion, getAnswers, getUser} from './datastore.js';
 import {cookiePassword} from './secrets.js';
+
+let port = process.env.PORT || 8888;
 
 initRedis();
 
@@ -25,7 +28,11 @@ server.register(require('vision'), function(err) {
   }
 });
 
-server.connection({ port: process.env.PORT || 8888 });
+server.register(Inert, function () {
+}); // requires a callback function but can be blank
+
+
+server.connection({ port });
 
 server.route({
   method: 'GET',
@@ -36,6 +43,17 @@ server.route({
     });
   }
 });
+
+server.route( {
+  method: 'GET',
+  path: '/{param*}',
+  handler: {
+    directory: {
+      path: './'
+    }
+  }
+});
+
 
 server.route({
   method: 'GET',
@@ -95,6 +113,18 @@ server.route({
     }).catch((err) => {
       console.log('question error: !', err);
     });
+  }
+});
+
+
+// Serve everything else from the public folder
+server.route({
+  method: 'GET',
+  path: '/static/{path*}',
+  handler: {
+    directory: {
+      path: './'
+    }
   }
 });
 

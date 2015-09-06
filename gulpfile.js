@@ -36,6 +36,13 @@ const COPY_SERVER_FILES = [
   SRC_ROOT + '*templates*/*.jade',
 ];
 
+const COPY_WEB_APP_FILES = [
+  SRC_ROOT_PUBLIC + '**/*',
+  '!' + SRC_ROOT_PUBLIC + '**/js/*.js', // JS files are handled by babel, so don't copy them.
+  '!' + SRC_ROOT_PUBLIC_LESS + 'less/**', // LESS files are handled by less, so don't copy them.
+  '!' + SRC_ROOT_PUBLIC_LESS,
+];
+
 const DEFAULT_PORT = 8888;
 const DEFAULT_HOST = 'localhost';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
@@ -92,6 +99,14 @@ gulp.task('less', function () {
 });
 
 /**
+ * Copy all public non-js directory app source/assets/components.
+ */
+gulp.task('copy-public-static', function() {
+  return gulp.src(COPY_WEB_APP_FILES)
+    .pipe(gulp.dest(DIST_ROOT_PUBLIC));
+});
+
+/**
  * Copy all non-js directory app source/assets/components.
  */
 gulp.task('copy-server-files', function() {
@@ -123,7 +138,7 @@ gulp.task('babel-node', function() {
  * Build the app.
  */
 gulp.task('build', function(cb) {
-  runSequence(['copy-server-files', 'babel-node', 'lint-node', 'less'], cb);
+  runSequence(['copy-public-static', 'copy-server-files', 'babel-node', 'lint-node', 'less'], cb);
 });
 
 /**
@@ -131,6 +146,7 @@ gulp.task('build', function(cb) {
  */
 gulp.task('watch', function() {
   gulp.watch(SERVER_FILES, ['lint-node', 'babel-node', 'copy-server-files', server.restart]);
+  gulp.watch([COPY_WEB_APP_FILES], ['copy-public-static-and-refresh']);
 });
 
 
