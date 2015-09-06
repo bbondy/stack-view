@@ -1,7 +1,7 @@
 require('babel/polyfill');
 let Path = require('path');
 let Hapi = require('hapi');
-import {initRedis, getQuestion, getAnswers} from './datastore.js';
+import {initRedis, getQuestion, getAnswers, getUser} from './datastore.js';
 import {cookiePassword} from './secrets.js';
 
 initRedis();
@@ -41,12 +41,24 @@ server.route({
   method: 'GET',
   path: '/questions/{id}',
   handler: function(request, reply) {
-    Promise.all([getQuestion(request.params.id), getAnswers(request.params.id)]).then((data) => {
-      let [question, answers] = data;
+    Promise.all([getQuestion(request.params.id),
+        getAnswers(request.params.id)
+    ]).then((data) => {
+      return new Promise((resolve) => {
+        let [question] = data;
+        getUser(question.ownerUserId).then((user) => {
+          data.push(user);
+          resolve(data);
+        });
+      });
+    }).then((data) => {
+      let [question, answers, user] = data;
+      console.log('user is: ', user);
       var context = {
         title: 'Test Main.',
         question,
         answers,
+        user,
       };
       var renderOpts = { runtimeOptions: {} };
       server.render('main', context, renderOpts, function (err, output) {
