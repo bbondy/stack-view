@@ -25,6 +25,7 @@
     "hapi": "^9.0.3",
     "hapi-react-views": "^3.1.0",
     "jade": "^1.11.0",
+    "mstranslator": "^2.0.2",
     "node-jsx": "^0.13.3",
     "react": "^0.13.3",
     "redis": "^1.0.0",
