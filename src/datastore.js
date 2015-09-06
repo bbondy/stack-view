@@ -134,3 +134,17 @@ export function addAnswer(questionId, answer) {
 export function getAnswers(questionId) {
   return getListElements(`comments:${questionId}`);
 }
+
+/**
+ * Adds the specified tag to the DB to the tag list
+ */
+export function addTag(tagName, tag) {
+  return pushToList('tags', tag);
+}
+
+/**
+ * Obtains a list of tags
+ */
+export function getTags() {
+  return getListElements('tags');
+}

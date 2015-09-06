@@ -1,5 +1,5 @@
 var fs = require('fs');
-import {initRedis, uninitRedis, addUser, addQuestion, addAnswer} from './datastore.js';
+import {initRedis, uninitRedis, addUser, addQuestion, addAnswer, addTag} from './datastore.js';
 var strict = true;
 var userMap = new Map();
 
@@ -98,6 +98,21 @@ export let parsePosts = parseFile.bind(null, 'Posts.xml', (node) => {
   }
 });
 
-parseUsers().then(() => parsePosts()).then(() => {
+export let parseTags = parseFile.bind(null, 'Tags.xml', (node) => {
+  let tag = {
+    id: node.attributes.Id,
+    tagName: node.attributes.TagName,
+    count: node.attributes.Count,
+    excerptPostId: node.attributes.ExcerptPostId,
+    wikiPostId: node.attributes.WikiPostId,
+  };
+
+  // For whatever reason the other dumps reference tags by their tagName, so index that way
+  addTag(tag.tagName, tag).catch((err) => {
+    console.log(`Could not add tagName: ${tag.tagName}: ${err}`);
+  });
+});
+
+parseUsers().then(() => parsePosts()).then(() => parseTags()).then(() => {
   uninitRedis();
 });
