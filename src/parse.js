@@ -61,7 +61,7 @@ export let parsePosts = parseFile.bind(null, 'Posts.xml', (node) => {
     id: node.attributes.Id,
     postTypeId: Number(node.attributes.PostTypeId),
     //creationDate: new Date(node.attributes.CreationDate),
-    //score: Number(node.attributes.Score),
+    score: Number(node.attributes.Score),
     //viewCount: Number(node.attributes.ViewCount),
     body: node.attributes.Body,
     ownerUserId: node.attributes.OwnerUserId,
