@@ -1,13 +1,14 @@
 var React = require('react');
 import {siteUrl} from '../config.js';
 
-const userUrl = (userId) => `${siteUrl}/users/${userId}`;
+const userUrl = (userId) => `/users/${userId}`;
+const seUserUrl = (userId) => `${siteUrl}users/${userId}`;
 
 var UserView = React.createClass({
   render: function() {
-    return <div>Posted by:
+    return <div><span>Posted by: </span>
       <a href={userUrl(this.props.id)}>{this.props.displayName}</a>
-      <span className="fa fa-stack-overflow"></span>
+      <a href={seUserUrl(this.props.id)}><span className="se-backlink fa fa-stack-overflow"/></a>
   </div>;
   }
 });
@@ -23,6 +24,28 @@ var Answer = React.createClass({
   }
 });
 
+var QuestionPage = React.createClass({
+  render: function() {
+    return <div>
+      <h1>{this.props.question.title}</h1>
+      <UserView id={this.props.question.ownerUserId}
+        displayName={this.props.question.ownerDisplayName}/>
+      <p dangerouslySetInnerHTML={{ __html: this.props.question.body}}/>
+      {
+        this.props.answers.map((answer) => <Answer key={answer.id} answer={answer} />)
+      }
+    </div>;
+  }
+});
+
+var UserPage = React.createClass({
+  render: function() {
+    return <div>
+      <h1>{this.props.user.displayName}</h1>
+    </div>;
+  }
+});
+
 var Main = React.createClass({
   componentDidMount: function() {
   },
@@ -34,13 +57,9 @@ var Main = React.createClass({
         <link rel='stylesheet' href='/css/font-awesome/font-awesome.css'/>
      </head>
      <body>
-       <h1>{this.props.question.title}</h1>
-      <UserView id={this.props.question.ownerUserId}
-        displayName={this.props.question.ownerDisplayName}/>
-       <p dangerouslySetInnerHTML={{ __html: this.props.question.body}}/>
-       {
-         this.props.answers.map((answer) => <Answer key={answer.id} answer={answer} />)
-       }
+     { this.props.question ? <QuestionPage question={this.props.question}
+         answers={this.props.answers}/> : null }
+     { this.props.user ? <UserPage user={this.props.user}/> : null }
      </body>
    </html>;
   }

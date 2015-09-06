@@ -62,20 +62,33 @@ server.route({
     Promise.all([getQuestion(request.params.id),
         getAnswers(request.params.id)
     ]).then((data) => {
-      return new Promise((resolve) => {
-        let [question] = data;
-        getUser(question.ownerUserId).then((user) => {
-          data.push(user);
-          resolve(data);
-        });
-      });
-    }).then((data) => {
-      let [question, answers, user] = data;
-      console.log('user is: ', user);
+      let [question, answers] = data;
       var context = {
         title: 'Test Main.',
         question,
         answers,
+      };
+      var renderOpts = { runtimeOptions: {} };
+      server.render('main', context, renderOpts, function (err, output) {
+        if (err) {
+          reply(err).code(500);
+          return;
+        }
+        reply(output).code(200);
+      });
+    }).catch((err) => {
+      console.log('question error: !', err);
+    });
+  }
+});
+
+server.route({
+  method: 'GET',
+  path: '/users/{id}',
+  handler: function(request, reply) {
+    getUser(request.params.id).then((user) => {
+      var context = {
+        title: 'Test Main.',
         user,
       };
       var renderOpts = { runtimeOptions: {} };
