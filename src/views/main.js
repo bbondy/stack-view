@@ -18,6 +18,7 @@ var Answer = React.createClass({
     return <div>
       <hr/>
       <div>Accepted: {this.props.isAccepted.toString()}</div>
+      <div>Score: {this.props.answer.score.toString()}</div>
       <UserView id={this.props.answer.ownerUserId}
         displayName={this.props.answer.ownerDisplayName}/>
       <div dangerouslySetInnerHTML={{ __html: this.props.answer.body}}/>
@@ -29,6 +30,7 @@ var QuestionPage = React.createClass({
   render: function() {
     return <div>
       <h1>{this.props.question.title}</h1>
+      <div>Score: {this.props.question.score.toString()}</div>
       <UserView id={this.props.question.ownerUserId}
         displayName={this.props.question.ownerDisplayName}/>
       <p dangerouslySetInnerHTML={{ __html: this.props.question.body}}/>
