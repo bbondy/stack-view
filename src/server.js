@@ -32,16 +32,6 @@ server.register(Inert, function () {
 
 server.connection({ port });
 
-server.route({
-  method: 'GET',
-  path: '/',
-  handler: function(request, reply) {
-    reply.view('index', {
-      title: 'Stack',
-    });
-  }
-});
-
 server.route( {
   method: 'GET',
   path: '/{param*}',
@@ -99,6 +89,24 @@ server.route({
       });
     }).catch((err) => {
       console.log('question error:', err);
+    });
+  }
+});
+
+server.route({
+  method: 'GET',
+  path: '/',
+  handler: function(request, reply) {
+    var context = {
+      title: 'Main',
+    };
+    var renderOpts = { runtimeOptions: {} };
+    server.render('main', context, renderOpts, function (err, output) {
+      if (err) {
+        reply(err).code(500);
+        return;
+      }
+      reply(output).code(200);
     });
   }
 });
