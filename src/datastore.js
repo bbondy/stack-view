@@ -1,76 +1,34 @@
-let redis = require('redis');
+import {mongoDB} from './secrets.js';
+var db = require('monk')(mongoDB);
 
-let redisClient;
-export function initRedis(port = 19279) {
-  redisClient = redis.createClient(port);
-  redisClient.on('error', function (err) {
-    console.error('DB: Error ' + err);
-  });
-}
+var questions = db.get('questions');
+var answers = db.get('answers');
+var users = db.get('users');
+var tags = db.get('tags');
 
-export function uninitRedis(shutdown = false) {
-  if (shutdown) {
-    redisClient.shutdown();
-  } else {
-    redisClient.quit();
-  }
-}
+questions.index('id',{ unique: true });
+answers.index('id parentId', { unique: true });
+users.index('id', { unique: true });
+tags.index('tagName', { unique: true });
 
-/**
- * Adds an object to a list
- */
-function pushToList(key, obj) {
+function set(collection, query, obj) {
   return new Promise((resolve, reject) => {
-    redisClient.rpush(key, JSON.stringify(obj), err => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
-}
-
-/**
- * Removes an item from the specified list
- */
-export function removeFromList(key, obj) {
-  return new Promise((resolve, reject) => {
-    redisClient.lrem(key, 1, JSON.stringify(obj), err => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
-}
-
-
-/**
- * Obtains all items in a list
- */
-function getListElements(key) {
-  return new Promise((resolve, reject) => {
-    redisClient.lrange(key, 0, -1, (err, replies) => {
+    collection.findAndModify(query, obj, (err, data) => {
       if (err) {
         reject(err);
         return;
       }
-      resolve(replies.map(result => JSON.parse(result)));
-    });
-  });
-}
-
-
-function set(key, obj) {
-  return new Promise((resolve, reject) => {
-    redisClient.set(key, JSON.stringify(obj), (err) => {
-      if (err) {
-        reject(err);
-        return;
+      if (data) {
+        resolve(data);
+      } else {
+        collection.insert(obj, (err2, data2) => {
+          if (err2) {
+            reject(err2);
+            return;
+          }
+          resolve(data2);
+        });
       }
-      resolve();
     });
   });
 }
@@ -78,73 +36,93 @@ function set(key, obj) {
 /**
  * Obtains an object for the key, and deserializes it
  */
-function get(key) {
+function get(collection, query) {
   return new Promise((resolve, reject) => {
-    redisClient.get(key, function(err, result) {
+    collection.find(query, (err, data) => {
       if (err) {
         reject(err);
         return;
       }
-      if (!result) {
-        resolve(null);
-      }
-      resolve(JSON.parse(result));
+      resolve(data);
     });
   });
 }
 
 /**
- * Adds the specified question to the DB to the location question:{questionId}
+ * Obtains an object for the key, and deserializes it
  */
-export function addQuestion(questionId, question) {
-  return set(`question:${questionId}`, question);
+function getOne(collection, query) {
+  return new Promise((resolve, reject) => {
+    collection.find(query, (err, data) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(data ? data[0] : null);
+    });
+  });
+}
+
+
+/**
+ * Adds the specified question to the DB
+ */
+export function addQuestion(question) {
+  return set(questions, { id: question.id }, question);
 }
 
 /**
- * Adds the specified user to the DB to the location question:{questionId}
+ * Adds the specified answer to the DB
  */
-export function addUser(userId, user) {
-  return set(`user:${userId}`, user);
+export function addAnswer(answer) {
+  return set(answers, { id: answer.id, parentId: answer.parentId }, answer);
 }
 
 /**
- * Obtains the specified question from the DB at the location question:{questionId}
+ * Adds the specified user to the DB
+ */
+export function addUser(user) {
+  return set(users, { id: user.id}, user);
+}
+
+/**
+ * Adds the specified tag to the DB to the tag list
+ */
+export function addTag(tag) {
+  return set(tags, { tagName: tag.tagName}, tag);
+}
+
+/**
+ * Obtains the specified question from the DB
  */
 export function getQuestion(questionId) {
-  return get(`question:${questionId}`);
-}
-
-/**
- * Adds the specified user to the DB to the location question:{questionId}
- */
-export function getUser(userId) {
-  return get(`user:${userId}`);
-}
-
-/**
- * Adds the specified answer to the DB to the location answers:{questionId}
- */
-export function addAnswer(questionId, answer) {
-  return pushToList(`comments:${questionId}`, answer);
+  return getOne(questions, { id: questionId });
 }
 
 /**
  * Obtains a list of answers for the specified questionId.
  */
 export function getAnswers(questionId) {
-  return getListElements(`comments:${questionId}`);
+  return get(answers, { parentId: questionId });
 }
 
 /**
- * Adds the specified tag to the DB to the tag list
+ * Adds the specified user to the DB
  */
-export function addTag(tagName, tag) {
-  return pushToList('tags', tag);
+export function getUser(userId) {
+  return getOne(users, { id: userId });
 }
 
 /**
  * Obtains a list of tags
  */
 export function getTags() {
-  return getListElements('tags');
+  return get(tags, {});
+}
+
+/**
+ * Uninitialize the DB connection
+ */
+export function uninitDB() {
+  db.close();
 }

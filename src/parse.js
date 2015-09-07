@@ -1,13 +1,12 @@
 var fs = require('fs');
-import {initRedis, uninitRedis, addUser, addQuestion, addAnswer, addTag} from './datastore.js';
+import {addUser, addQuestion, addAnswer, addTag, uninitDB} from './datastore.js';
 var strict = true;
 var userMap = new Map();
-
-initRedis();
 
 let parseFile = (filePath, onOpenTag) => {
   return new Promise((resolve, reject) => {
     var saxStream = require('sax').createStream(strict, {})
+    let promises = [];
     saxStream.on('error', (e) => {
       // unhandled errors will throw, since this is a proper node
       // event emitter.
@@ -19,12 +18,12 @@ let parseFile = (filePath, onOpenTag) => {
     });
 
     saxStream.on('opentag', (node) => {
-      onOpenTag(node);
+      promises.push(onOpenTag(node));
     });
 
     saxStream.on('end', () => {
       // parser stream is done, and ready to have more stuff written to it.
-      resolve();
+      Promise.all(promises).then(resolve).catch((err) => console.error('Promise.all err is: ', err));
     });
 
     fs.createReadStream(filePath)
@@ -50,9 +49,13 @@ export let parseUsers = parseFile.bind(null, 'Users.xml', (node) => {
     profileImageUrl: node.attributes.ProfileImageUrl,
     //age: node.attributes.age,
   };
+  if (!user.id) {
+    console.warn('user has blanks for user: ', user);
+    return Promise.resolve();
+  }
   userMap.set(user.id, user);
-  addUser(user.id, user).catch((err) => {
-      console.log(`Could not add user id: ${id}`);
+  return addUser(user).catch((err) => {
+      console.error(`Could not add user id: ${id}`);
   });
 });
 
@@ -87,13 +90,21 @@ export let parsePosts = parseFile.bind(null, 'Posts.xml', (node) => {
 
   if (data.postTypeId === 1) {
     data.acceptedAnswerId = node.attributes.AcceptedAnswerId;
-      addQuestion(data.id, data).catch((err) => {
-      console.log(`Could not add questionid: ${data.id}: ${err}`);
+    if (!data.id) {
+      console.warn('question has blanks for question: ', question);
+      return;
+    }
+    return addQuestion(data).catch((err) => {
+      console.error(`Could not add questionid: ${data.id}: ${err}`);
     });
   } else if (data.postTypeId === 2) {
     data.parentId = node.attributes.ParentId;
-    addAnswer(data.parentId, data).catch((err) => {
-      console.log(`Could not add answer for question: ${data.parentId}: ${err}`);
+    if (!data.id || !data.parentId) {
+      console.warn('answer has blanks for answer: ', answer);
+      return;
+    }
+    return addAnswer(data).catch((err) => {
+      console.error(`Could not add answer for question: ${data.parentId}: ${err}`);
     });
   }
 });
@@ -107,12 +118,17 @@ export let parseTags = parseFile.bind(null, 'Tags.xml', (node) => {
     wikiPostId: node.attributes.WikiPostId,
   };
 
+  if (!tag.tagName) {
+    console.warn('tagName is blank for tag: ', tag);
+    return;
+  }
+
   // For whatever reason the other dumps reference tags by their tagName, so index that way
-  addTag(tag.tagName, tag).catch((err) => {
-    console.log(`Could not add tagName: ${tag.tagName}: ${err}`);
+  return addTag(tag).catch((err) => {
+    console.error(`Could not add tagName: ${tag.tagName}: ${err}`);
   });
 });
 
-parseUsers().then(() => parsePosts()).then(() => parseTags()).then(() => {
-  uninitRedis();
+parseUsers().then(parsePosts).then(parseTags).then(uninitDB).catch((err) => {
+  console.error('err: ', err);
 });

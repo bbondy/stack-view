@@ -26,6 +26,7 @@
     "hapi-react-views": "^3.1.0",
     "inert": "^3.0.1",
     "jade": "^1.11.0",
+    "monk": "^1.0.1",
     "mstranslator": "^2.0.2",
     "node-jsx": "^0.13.3",
     "react": "^0.13.3",

@@ -2,12 +2,10 @@ require('babel/polyfill');
 let Path = require('path');
 let Hapi = require('hapi');
 var Inert = require('inert');
-import {initRedis, getQuestion, getAnswers, getUser, getTags} from './datastore.js';
+import {getQuestion, getAnswers, getUser, getTags} from './datastore.js';
 import {cookiePassword} from './secrets.js';
 
 let port = process.env.PORT || 8888;
-
-initRedis();
 
 let server = new Hapi.Server({
   connections: {
@@ -114,7 +112,7 @@ server.route({
         title: 'Tags',
         tags,
       };
-      console.log(tags);
+      console.log('tags is: ', tags);
       var renderOpts = { runtimeOptions: {} };
       server.render('main', context, renderOpts, function (err, output) {
         if (err) {
