@@ -43,7 +43,7 @@ const COPY_WEB_APP_FILES = [
   '!' + SRC_ROOT_PUBLIC_LESS,
 ];
 
-const DEFAULT_PORT = 8888;
+const DEFAULT_PORT = 20119;
 const DEFAULT_HOST = 'localhost';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 

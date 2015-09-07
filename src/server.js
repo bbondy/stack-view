@@ -5,7 +5,7 @@ var Inert = require('inert');
 import {getQuestion, getAnswers, getUser, getTags} from './datastore.js';
 import {cookiePassword} from './secrets.js';
 
-let port = process.env.PORT || 8888;
+let port = process.env.PORT || 20119;
 
 let server = new Hapi.Server({
   connections: {
