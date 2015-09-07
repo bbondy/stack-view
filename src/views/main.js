@@ -4,19 +4,6 @@ import QuestionPage from './questionPage.js';
 import TagPage from './tagPage.js';
 
 var Main = React.createClass({
-  componentWillMount: function() {
-    if (this.props.answers && this.props.question) {
-      const scoreAnswer = (answer) =>
-        (answer.score || 0) + (this.props.question.acceptedAnswerId === answer.id ? 1000000 : 0);
-      this.setState({
-        answers: this.props.answers.sort((answer1, answer2) => scoreAnswer(answer2) - scoreAnswer(answer1))
-      });
-    } else if (this.props.tags) {
-      this.setState({
-        tags: this.props.tags.sort()
-      });
-    }
-  },
   render: function () {
     return <html>
       <head>
@@ -26,9 +13,9 @@ var Main = React.createClass({
      </head>
      <body>
      { this.props.question ? <QuestionPage question={this.props.question}
-         answers={this.state.answers}/> : null }
+         answers={this.props.answers}/> : null }
      { this.props.user ? <UserPage user={this.props.user}/> : null }
-     { this.state.tags ? <TagPage tags={this.state.tags}/> : null }
+     { this.props.tags ? <TagPage tags={this.props.tags}/> : null }
      </body>
    </html>;
   }

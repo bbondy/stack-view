@@ -9,7 +9,7 @@ var tags = db.get('tags');
 questions.index('id',{ unique: true });
 answers.index('id parentId', { unique: true });
 users.index('id', { unique: true });
-tags.index('tagName', { unique: true });
+tags.index({ 'tagName': 1 }, { unique: true });
 
 function set(collection, query, obj) {
   return new Promise((resolve, reject) => {
@@ -36,9 +36,9 @@ function set(collection, query, obj) {
 /**
  * Obtains an object for the key, and deserializes it
  */
-function get(collection, query) {
+function get(collection, query, options) {
   return new Promise((resolve, reject) => {
-    collection.find(query, (err, data) => {
+    collection.find(query, options, (err, data) => {
       if (err) {
         reject(err);
         return;
@@ -51,9 +51,9 @@ function get(collection, query) {
 /**
  * Obtains an object for the key, and deserializes it
  */
-function getOne(collection, query) {
+function getOne(collection, query, options) {
   return new Promise((resolve, reject) => {
-    collection.find(query, (err, data) => {
+    collection.find(query, options, (err, data) => {
       if (err) {
         reject(err);
         return;
@@ -103,7 +103,7 @@ export function getQuestion(questionId) {
  * Obtains a list of answers for the specified questionId.
  */
 export function getAnswers(questionId) {
-  return get(answers, { parentId: questionId });
+  return get(answers, { parentId: questionId }, { sort: { score: -1 }} );
 }
 
 /**
@@ -117,7 +117,7 @@ export function getUser(userId) {
  * Obtains a list of tags
  */
 export function getTags() {
-  return get(tags, {});
+  return get(tags, {} ,{sort: { tagName: 1 }});
 }
 
 /**
