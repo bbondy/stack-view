@@ -2,7 +2,7 @@ require('babel/polyfill');
 let Path = require('path');
 let Hapi = require('hapi');
 var Inert = require('inert');
-import {initRedis, getQuestion, getAnswers, getUser} from './datastore.js';
+import {initRedis, getQuestion, getAnswers, getUser, getTags} from './datastore.js';
 import {cookiePassword} from './secrets.js';
 
 let port = process.env.PORT || 8888;
@@ -64,7 +64,7 @@ server.route({
     ]).then((data) => {
       let [question, answers] = data;
       var context = {
-        title: 'Test Main.',
+        title: question.title,
         question,
         answers,
       };
@@ -77,7 +77,7 @@ server.route({
         reply(output).code(200);
       });
     }).catch((err) => {
-      console.log('question error: !', err);
+      console.log('question error:', err);
     });
   }
 });
@@ -88,7 +88,7 @@ server.route({
   handler: function(request, reply) {
     getUser(request.params.id).then((user) => {
       var context = {
-        title: 'Test Main.',
+        title: user.displayName,
         user,
       };
       var renderOpts = { runtimeOptions: {} };
@@ -100,7 +100,31 @@ server.route({
         reply(output).code(200);
       });
     }).catch((err) => {
-      console.log('question error: !', err);
+      console.log('question error:', err);
+    });
+  }
+});
+
+server.route({
+  method: 'GET',
+  path: '/tags',
+  handler: function(request, reply) {
+    getTags().then((tags) => {
+      var context = {
+        title: 'Tags',
+        tags,
+      };
+      console.log(tags);
+      var renderOpts = { runtimeOptions: {} };
+      server.render('main', context, renderOpts, function (err, output) {
+        if (err) {
+          reply(err).code(500);
+          return;
+        }
+        reply(output).code(200);
+      });
+    }).catch((err) => {
+      console.log('tags error: ', err);
     });
   }
 });
