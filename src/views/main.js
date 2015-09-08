@@ -11,6 +11,7 @@ var Main = React.createClass({
         <title>{this.props.title}</title>
         <link rel='stylesheet' href='/css/main.css'/>
         <link rel='stylesheet' href='/css/font-awesome/font-awesome.css'/>
+        <script src='/js/analytics.js' async='async'/>
      </head>
      <body>
      { this.props.question ? <QuestionPage question={this.props.question}

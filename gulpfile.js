@@ -80,6 +80,21 @@ gulp.task('bundle-js', function() {
 });
 
 /**
+ * Runs linters on all javascript files found in the src dir.
+ */
+gulp.task('lint-js', function() {
+  return gulp.src([
+      SRC_ROOT + 'public/js/**/*.js',
+      TEST_ROOT + '**/*.js',
+      '!' + SRC_ROOT + 'js/ext/*.js',
+      '!' + SRC_ROOT + 'public/js/analytics.js',
+    ])
+    .pipe(eslint())
+    .pipe(eslint.format())
+    .pipe(gutil.noop());
+});
+
+/**
  * Convert less stylesheets to css
  */
 gulp.task('less', function () {
@@ -114,6 +129,16 @@ gulp.task('copy-server-files', function() {
     .pipe(gulp.dest(DIST_ROOT));
 });
 
+
+/**
+ * Copy analytics
+ */
+gulp.task('copy-analytics', function() {
+  return gulp.src([SRC_ROOT_PUBLIC_JS + 'analytics.js'])
+    .pipe(gulp.dest(DIST_ROOT_PUBLIC_JS));
+});
+
+
 /**
  * Converts javascript to es5. This allows us to use harmony classes and modules.
  */
@@ -138,7 +163,7 @@ gulp.task('babel-node', function() {
  * Build the app.
  */
 gulp.task('build', function(cb) {
-  runSequence(['copy-public-static', 'copy-server-files', 'babel-node', 'lint-node', 'less'], cb);
+  runSequence(['copy-public-static', 'copy-analytics', 'copy-server-files', 'babel-node', 'lint-node', 'less'], cb);
 });
 
 /**
@@ -146,6 +171,9 @@ gulp.task('build', function(cb) {
  */
 gulp.task('watch', function() {
   gulp.watch(SERVER_FILES, ['lint-node', 'babel-node', 'copy-server-files', server.restart]);
+  gulp.watch([
+    SRC_ROOT_PUBLIC_JS + '**/*',
+  ], ['lint-js', 'bundle-js']);
   gulp.watch([COPY_WEB_APP_FILES], ['copy-public-static-and-refresh']);
 });
 
