@@ -1,0 +1,2 @@
+ps -fu tweetpig | grep rosettastack
+ps -fu tweetpig | grep stackview
