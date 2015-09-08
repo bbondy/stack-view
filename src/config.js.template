@@ -1,2 +1,0 @@
-export let siteName = 'StackOverflow';
-export let siteUrl = 'http://www.stackoverflow.com/';

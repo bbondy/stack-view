@@ -8,6 +8,7 @@ var Answer = React.createClass({
       <div>Accepted: {this.props.isAccepted.toString()}</div>
       <div>Score: {this.props.answer.score.toString()}</div>
       <User id={this.props.answer.ownerUserId}
+        siteSlug={this.props.siteSlug}
         displayName={this.props.answer.ownerDisplayName}/>
       <div dangerouslySetInnerHTML={{ __html: this.props.answer.body}}/>
     </div>;

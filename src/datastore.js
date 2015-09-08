@@ -1,15 +1,25 @@
-import {mongoDB} from './secrets.js';
-var db = require('monk')(mongoDB);
+var monk = require('monk');
 
-var questions = db.get('questions');
-var answers = db.get('answers');
-var users = db.get('users');
-var tags = db.get('tags');
+import {sites} from './config.js';
 
-questions.index('id',{ unique: true });
-answers.index('id parentId', { unique: true });
-users.index('id', { unique: true });
-tags.index({ 'tagName': 1 }, { unique: true });
+let dbInfoMap = new Map();
+
+sites.forEach(site => {
+  let db = monk(site.db);
+  let dbInfo = {
+    db,
+    questions: db.get('questions'),
+    answers: db.get('answers'),
+    users: db.get('users'),
+    tags: db.get('tags')
+  };
+
+  dbInfo.questions.index('id',{ unique: true });
+  dbInfo.answers.index('id parentId', { unique: true });
+  dbInfo.users.index('id', { unique: true });
+  dbInfo.tags.index({ 'tagName': 1 }, { unique: true });
+  dbInfoMap.set(site.slug, dbInfo);
+});
 
 function set(collection, query, obj) {
   return new Promise((resolve, reject) => {
@@ -67,62 +77,62 @@ function getOne(collection, query, options) {
 /**
  * Adds the specified question to the DB
  */
-export function addQuestion(question) {
-  return set(questions, { id: question.id }, question);
+export function addQuestion(siteSlug, question) {
+  return set(dbInfoMap.get(siteSlug).questions, { id: question.id }, question);
 }
 
 /**
  * Adds the specified answer to the DB
  */
-export function addAnswer(answer) {
-  return set(answers, { id: answer.id, parentId: answer.parentId }, answer);
+export function addAnswer(siteSlug, answer) {
+  return set(dbInfoMap.get(siteSlug).answers, { id: answer.id, parentId: answer.parentId }, answer);
 }
 
 /**
  * Adds the specified user to the DB
  */
-export function addUser(user) {
-  return set(users, { id: user.id}, user);
+export function addUser(siteSlug, user) {
+  return set(dbInfoMap.get(siteSlug).users, { id: user.id}, user);
 }
 
 /**
  * Adds the specified tag to the DB to the tag list
  */
-export function addTag(tag) {
-  return set(tags, { tagName: tag.tagName}, tag);
+export function addTag(siteSlug, tag) {
+  return set(dbInfoMap.get(siteSlug).tags, { tagName: tag.tagName}, tag);
 }
 
 /**
  * Obtains the specified question from the DB
  */
-export function getQuestion(questionId) {
-  return getOne(questions, { id: questionId });
+export function getQuestion(siteSlug, questionId) {
+  return getOne(dbInfoMap.get(siteSlug).questions, { id: questionId });
 }
 
 /**
  * Obtains a list of answers for the specified questionId.
  */
-export function getAnswers(questionId) {
-  return get(answers, { parentId: questionId }, { sort: { score: -1 }} );
+export function getAnswers(siteSlug, questionId) {
+  return get(dbInfoMap.get(siteSlug).answers, { parentId: questionId }, { sort: { score: -1 }} );
 }
 
 /**
  * Adds the specified user to the DB
  */
-export function getUser(userId) {
-  return getOne(users, { id: userId });
+export function getUser(siteSlug, userId) {
+  return getOne(dbInfoMap.get(siteSlug).users, { id: userId });
 }
 
 /**
  * Obtains a list of tags
  */
-export function getTags() {
-  return get(tags, {} ,{sort: { tagName: 1 }});
+export function getTags(siteSlug) {
+  return get(dbInfoMap.get(siteSlug).tags, {} ,{sort: { tagName: 1 }});
 }
 
 /**
  * Uninitialize the DB connection
  */
 export function uninitDB() {
-  db.close();
+  dbInfoMap.forEach(dbInfo => dbInfo.db.close());
 }

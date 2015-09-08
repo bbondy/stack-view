@@ -2,6 +2,7 @@ var fs = require('fs');
 import {addUser, addQuestion, addAnswer, addTag, uninitDB} from './datastore.js';
 var strict = true;
 var userMap = new Map();
+let siteSlug = 'programmers';
 
 let parseFile = (filePath, onOpenTag) => {
   return new Promise((resolve, reject) => {
@@ -54,7 +55,7 @@ export let parseUsers = parseFile.bind(null, 'Users.xml', (node) => {
     return Promise.resolve();
   }
   userMap.set(user.id, user);
-  return addUser(user).catch((err) => {
+  return addUser(siteSlug, user).catch((err) => {
       console.error(`Could not add user id: ${id}`);
   });
 });
@@ -94,7 +95,7 @@ export let parsePosts = parseFile.bind(null, 'Posts.xml', (node) => {
       console.warn('question has blanks for question: ', question);
       return;
     }
-    return addQuestion(data).catch((err) => {
+    return addQuestion(siteSlug, data).catch((err) => {
       console.error(`Could not add questionid: ${data.id}: ${err}`);
     });
   } else if (data.postTypeId === 2) {
@@ -103,7 +104,7 @@ export let parsePosts = parseFile.bind(null, 'Posts.xml', (node) => {
       console.warn('answer has blanks for answer: ', answer);
       return;
     }
-    return addAnswer(data).catch((err) => {
+    return addAnswer(siteSlug, data).catch((err) => {
       console.error(`Could not add answer for question: ${data.parentId}: ${err}`);
     });
   }
@@ -124,7 +125,7 @@ export let parseTags = parseFile.bind(null, 'Tags.xml', (node) => {
   }
 
   // For whatever reason the other dumps reference tags by their tagName, so index that way
-  return addTag(tag).catch((err) => {
+  return addTag(siteSlug, tag).catch((err) => {
     console.error(`Could not add tagName: ${tag.tagName}: ${err}`);
   });
 });

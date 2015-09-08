@@ -14,10 +14,13 @@ var Main = React.createClass({
         <script src='/js/analytics.js' async='async'/>
      </head>
      <body>
-     { this.props.question ? <QuestionPage question={this.props.question}
-         answers={this.props.answers}/> : null }
-     { this.props.user ? <UserPage user={this.props.user}/> : null }
-     { this.props.tags ? <TagPage tags={this.props.tags}/> : null }
+     { this.props.question ? <QuestionPage siteSlug={this.props.siteSlug}
+       question={this.props.question}
+       answers={this.props.answers}/> : null }
+     { this.props.user ? <UserPage siteSlug={this.props.siteSlug}
+       user={this.props.user}/> : null }
+     { this.props.tags ? <TagPage siteSlug={this.props.siteSlug}
+       tags={this.props.tags}/> : null }
      { !this.props.question && !this.props.user && !this.props.tags ? <IndexPage/> : null }
 
      </body>

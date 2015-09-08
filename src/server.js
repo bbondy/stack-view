@@ -45,14 +45,15 @@ server.route( {
 
 server.route({
   method: 'GET',
-  path: '/questions/{id}',
+  path: '/{siteSlug}/questions/{id}',
   handler: function(request, reply) {
-    Promise.all([getQuestion(request.params.id),
-        getAnswers(request.params.id)
+    Promise.all([getQuestion(request.params.siteSlug, request.params.id),
+        getAnswers(request.params.siteSlug, request.params.id)
     ]).then((data) => {
       let [question, answers] = data;
       var context = {
         title: question.title,
+        siteSlug: request.params.siteSlug,
         question,
         answers,
       };
@@ -72,11 +73,12 @@ server.route({
 
 server.route({
   method: 'GET',
-  path: '/users/{id}',
+  path: '/{siteSlug}/users/{id}',
   handler: function(request, reply) {
-    getUser(request.params.id).then((user) => {
+    getUser(request.params.siteSlug, request.params.id).then((user) => {
       var context = {
         title: user.displayName,
+        siteSlug: request.params.siteSlug,
         user,
       };
       var renderOpts = { runtimeOptions: {} };
@@ -113,11 +115,12 @@ server.route({
 
 server.route({
   method: 'GET',
-  path: '/tags',
+  path: '/{siteSlug}/tags',
   handler: function(request, reply) {
-    getTags().then((tags) => {
+    getTags(request.params.siteSlug).then((tags) => {
       var context = {
         title: 'Tags',
+        siteSlug: request.params.siteSlug,
         tags,
       };
       console.log('tags is: ', tags);
@@ -137,9 +140,9 @@ server.route({
 
 server.route({
   method: 'GET',
-  path: '/api/questions/{id}',
+  path: '/api/{siteSlug}/questions/{id}',
   handler: function(request, reply) {
-    getQuestion(request.params.id).then((answers) => {
+    getQuestion(request.params.siteSlug, request.params.id).then((answers) => {
       reply(answers).code(200);
     }).catch((err) => {
       console.log('question error: !', err);
@@ -149,9 +152,9 @@ server.route({
 
 server.route({
   method: 'GET',
-  path: '/api/questions/{id}/answers',
+  path: '/api/{siteSlug}/questions/{id}/answers',
   handler: function(request, reply) {
-    getAnswers(request.params.id).then((answers) => {
+    getAnswers(request.params.siteSlug, request.params.id).then((answers) => {
       reply(answers).code(200);
     }).catch((err) => {
       console.log('question error: !', err);
