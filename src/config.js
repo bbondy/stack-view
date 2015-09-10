@@ -3,6 +3,6 @@ export let sites = [{
   name: 'Programmers',
   slug: 'programmers',
   seUrl: 'http://programmers.stackexchange.com/',
-  langs: ['en'],
+  langs: ['en', 'fr'],
   db: 'localhost/stackview-db',
 }];
