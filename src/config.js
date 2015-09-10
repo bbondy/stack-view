@@ -1,3 +1,4 @@
+export let baseUrl = 'http://rosettastack.com';
 export let sites = [{
   name: 'Programmers',
   slug: 'programmers',

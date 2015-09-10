@@ -1,6 +1,6 @@
 var sm = require('sitemap');
 var fs = require('fs');
-import {sites} from './config.js';
+import {sites, baseUrl} from './config.js';
 import {getTagsStream, getQuestionsStream, getUsersStream, getUsers, uninitDB} from './datastore.js';
 
 // Must have sitemaps 50k URLs or less and less than 50MB uncompressed.
@@ -13,10 +13,16 @@ export function sitemapItemFromQuestion(slug, question) {
   };
 }
 
+export function sitemapItemFromUser(slug, user) {
+  return {
+    url: `${slug}/users/${user.id}`,
+  };
+}
+
 function genSitemapForSite(slug) {
   return new Promise((resolve, reject) => {
     let sitemap = sm.createSitemap({
-      hostname: 'http://rosettastack.com',
+      hostname: baseUrl,
       cacheTime: 0,
       urls: [
         { url: `/` },
@@ -25,7 +31,9 @@ function genSitemapForSite(slug) {
     });
     getTagsStream(slug, question => {
       sitemap.add(sitemapItemFromQuestion(slug, question));
-    }).then(() => {
+    }).then(getUsersStream(slug, user => {
+      sitemap.add(sitemapItemFromUser(slug, user));
+    })).then(() => {
       sitemap.toXML(xml => {
         if (!fs.existsSync(`src/${slug}`)) {
           fs.mkdirSync(`src/${slug}`);
