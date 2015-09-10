@@ -45,15 +45,16 @@ server.route( {
 
 server.route({
   method: 'GET',
-  path: '/{siteSlug}/questions/{id}',
+  path: '/{siteSlug}/{lang}/questions/{id}',
   handler: function(request, reply) {
-    Promise.all([getQuestion(request.params.siteSlug, request.params.id),
-        getAnswers(request.params.siteSlug, request.params.id)
+    Promise.all([getQuestion(request.params.siteSlug, request.params.lang, request.params.id),
+        getAnswers(request.params.siteSlug, request.params.lang, request.params.id)
     ]).then((data) => {
       let [question, answers] = data;
       var context = {
         title: question.title,
         siteSlug: request.params.siteSlug,
+        lang: request.params.lang,
         question,
         answers,
       };
@@ -73,12 +74,13 @@ server.route({
 
 server.route({
   method: 'GET',
-  path: '/{siteSlug}/users/{id}',
+  path: '/{siteSlug}/{lang}/users/{id}',
   handler: function(request, reply) {
-    getUser(request.params.siteSlug, request.params.id).then((user) => {
+    getUser(request.params.siteSlug, request.params.lang, request.params.id).then((user) => {
       var context = {
         title: user.displayName,
         siteSlug: request.params.siteSlug,
+        lang: request.params.lang,
         user,
       };
       var renderOpts = { runtimeOptions: {} };
@@ -115,15 +117,15 @@ server.route({
 
 server.route({
   method: 'GET',
-  path: '/{siteSlug}/tags',
+  path: '/{siteSlug}/{lang}/tags',
   handler: function(request, reply) {
-    getTags(request.params.siteSlug).then((tags) => {
+    getTags(request.params.siteSlug, request.params.lang).then((tags) => {
       var context = {
         title: 'Tags',
         siteSlug: request.params.siteSlug,
+        lang: request.params.lang,
         tags,
       };
-      console.log('tags is: ', tags);
       var renderOpts = { runtimeOptions: {} };
       server.render('main', context, renderOpts, function (err, output) {
         if (err) {
@@ -140,9 +142,9 @@ server.route({
 
 server.route({
   method: 'GET',
-  path: '/api/{siteSlug}/questions/{id}',
+  path: '/api/{siteSlug}/{lang}/questions/{id}',
   handler: function(request, reply) {
-    getQuestion(request.params.siteSlug, request.params.id).then((answers) => {
+    getQuestion(request.params.siteSlug, request.params.lang, request.params.id).then((answers) => {
       reply(answers).code(200);
     }).catch((err) => {
       console.log('question error: !', err);
@@ -152,9 +154,9 @@ server.route({
 
 server.route({
   method: 'GET',
-  path: '/api/{siteSlug}/questions/{id}/answers',
+  path: '/api/{siteSlug}/{lang}/questions/{id}/answers',
   handler: function(request, reply) {
-    getAnswers(request.params.siteSlug, request.params.id).then((answers) => {
+    getAnswers(request.params.siteSlug, request.params.lang, request.params.id).then((answers) => {
       reply(answers).code(200);
     }).catch((err) => {
       console.log('question error: !', err);

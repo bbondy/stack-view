@@ -116,7 +116,7 @@ export function addTag(siteSlug, tag) {
 /**
  * Obtains the specified question from the DB
  */
-export function getQuestion(siteSlug, questionId) {
+export function getQuestion(siteSlug, lang, questionId) {
   return getOne(dbInfoMap.get(siteSlug).questions, { id: questionId });
 }
 
@@ -145,21 +145,21 @@ export function getTagsStream(siteSlug, eachCB) {
 /**
  * Obtains a list of answers for the specified questionId.
  */
-export function getAnswers(siteSlug, questionId) {
+export function getAnswers(siteSlug, lang, questionId) {
   return get(dbInfoMap.get(siteSlug).answers, { parentId: questionId }, { sort: { score: -1 }} );
 }
 
 /**
  * Adds the specified user to the DB
  */
-export function getUser(siteSlug, userId) {
+export function getUser(siteSlug, lang, userId) {
   return getOne(dbInfoMap.get(siteSlug).users, { id: userId });
 }
 
 /**
  * Obtains a list of tags
  */
-export function getTags(siteSlug) {
+export function getTags(siteSlug, lang) {
   return get(dbInfoMap.get(siteSlug).tags, {} ,{sort: { tagName: 1 }});
 }
 
