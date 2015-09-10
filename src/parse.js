@@ -39,16 +39,16 @@ export let parseUsers = parseFile.bind(null, 'Users.xml', (node) => {
     //creationdate: new Date(node.attributes.CreationDate),
     displayName: node.attributes.DisplayName,
     //lastAccessDate: new Date(node.attributes.LastAccessDate),
-    //websiteUrl: node.attributes.websiteUrl,
-    //location: node.attributes.Location,
-    //aboutMe: node.attributes.AboutMe,
+    websiteUrl: node.attributes.websiteUrl,
+    location: node.attributes.Location,
+    aboutMe: node.attributes.AboutMe,
     //views: Number(node.attributes.Views),
     //upVotes: Number(node.attributes.UpVotes),
     //downVotes: Number(node.attributes.DownVotes),
-    //emailhash: node.attributes.EmailHash,
+    //emailHash: node.attributes.EmailHash,
     //accountId: node.attributes.AccountId,
     profileImageUrl: node.attributes.ProfileImageUrl,
-    //age: node.attributes.age,
+    age: node.attributes.age,
   };
   if (!user.id) {
     console.warn('user has blanks for user: ', user);
