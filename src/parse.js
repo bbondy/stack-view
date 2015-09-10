@@ -72,7 +72,7 @@ export let parsePosts = parseFile.bind(null, 'Posts.xml', (node) => {
     // Data dump doesn't always include this field!
     // ownerDisplayName: node.attributes.OwnerDisplayName,
     //lastEditorUserId: node.attributes.LastEditorUserId,
-    //lastEditDate: new Date(node.attributes.LastEditDate),
+    lastEditDate: new Date(node.attributes.LastEditDate),
     //lastActivityDate: new Date(node.attributes.LastActivityDate),
     title: node.attributes.Title,
     tags: node.attributes.Tags,

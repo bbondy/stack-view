@@ -73,6 +73,17 @@ function getOne(collection, query, options) {
   });
 }
 
+/**
+ * Calls a callback for each item in a query resultset
+ */
+function getStream(collection, filter, eachCB) {
+  return new Promise((resolve, reject) => {
+    collection.find(filter, { stream: true })
+      .each(eachCB)
+      .error(reject)
+      .success(resolve);
+  });
+}
 
 /**
  * Adds the specified question to the DB
@@ -108,6 +119,28 @@ export function addTag(siteSlug, tag) {
 export function getQuestion(siteSlug, questionId) {
   return getOne(dbInfoMap.get(siteSlug).questions, { id: questionId });
 }
+
+/**
+ * Obtains all questions from the DB calling eachCB for each, and resolves once done
+ */
+export function getQuestionsStream(siteSlug, eachCB) {
+  return getStream(dbInfoMap.get(siteSlug).questions, {}, eachCB);
+}
+
+/**
+ * Obtains all users from the DB calling eachCB for each, and resolves once done
+ */
+export function getUsersStream(siteSlug, eachCB) {
+  return getStream(dbInfoMap.get(siteSlug).users, {}, eachCB);
+}
+
+/**
+ * Obtains all tags from the DB calling eachCB for each, and resolves once done
+ */
+export function getTagsStream(siteSlug, eachCB) {
+  return getStream(dbInfoMap.get(siteSlug).tags, {}, eachCB);
+}
+
 
 /**
  * Obtains a list of answers for the specified questionId.
