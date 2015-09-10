@@ -1,7 +1,7 @@
 var sm = require('sitemap');
 var fs = require('fs');
 import {sites, baseUrl} from './config.js';
-import {getTagsStream, getQuestionsStream, getUsersStream, getUsers, uninitDB} from './datastore.js';
+import {getQuestionsStream, getUsersStream, uninitDB} from './datastore.js';
 
 // Must have sitemaps 50k URLs or less and less than 50MB uncompressed.
 // Otherwise use sitemap index: https://support.google.com/webmasters/answer/75712?vid=1-635773935364676498-3941691634&rd=1
@@ -29,7 +29,7 @@ function genSitemapForSite(lang, slug) {
         { url: `${slug}/${lang}/tags` },
       ]
     });
-    getTagsStream(slug, question => {
+    getQuestionsStream(slug, question => {
       sitemap.add(sitemapItemFromQuestion(lang, slug, question));
     }).then(getUsersStream(slug, user => {
       sitemap.add(sitemapItemFromUser(lang, slug, user));
