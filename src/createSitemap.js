@@ -29,9 +29,9 @@ function genSitemapForSite(lang, slug) {
         { url: `${slug}/${lang}/tags` },
       ]
     });
-    getQuestionsStream(slug, question => {
+    getQuestionsStream(slug, lang, question => {
       sitemap.add(sitemapItemFromQuestion(lang, slug, question));
-    }).then(getUsersStream(slug, user => {
+    }).then(getUsersStream(slug, lang, user => {
       sitemap.add(sitemapItemFromUser(lang, slug, user));
     })).then(() => {
       sitemap.toXML(xml => {

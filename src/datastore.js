@@ -76,7 +76,7 @@ function getOne(collection, query, options) {
 /**
  * Calls a callback for each item in a query resultset
  */
-function getStream(collection, filter, eachCB) {
+function getStream(collection, lang, filter, eachCB) {
   return new Promise((resolve, reject) => {
     collection.find(filter, { stream: true })
       .each(eachCB)
@@ -114,7 +114,8 @@ export function addTag(siteSlug, tag) {
 }
 
 /**
- * Obtains the specified question from the DB
+ * Obtains the specified question from the DB.
+ * Results will be localized in the specified language.
  */
 export function getQuestion(siteSlug, lang, questionId) {
   return getOne(dbInfoMap.get(siteSlug).questions, { id: questionId });
@@ -122,35 +123,39 @@ export function getQuestion(siteSlug, lang, questionId) {
 
 /**
  * Obtains all questions from the DB calling eachCB for each, and resolves once done
+ * Results will be localized in the specified language.
  */
-export function getQuestionsStream(siteSlug, eachCB) {
+export function getQuestionsStream(siteSlug, lang, eachCB) {
   return getStream(dbInfoMap.get(siteSlug).questions, {}, eachCB);
 }
 
 /**
  * Obtains all users from the DB calling eachCB for each, and resolves once done
+ * Results will be localized in the specified language.
  */
-export function getUsersStream(siteSlug, eachCB) {
+export function getUsersStream(siteSlug, lang, eachCB) {
   return getStream(dbInfoMap.get(siteSlug).users, {}, eachCB);
 }
 
 /**
  * Obtains all tags from the DB calling eachCB for each, and resolves once done
+ * Results will be localized in the specified language.
  */
-export function getTagsStream(siteSlug, eachCB) {
+export function getTagsStream(siteSlug, lang, eachCB) {
   return getStream(dbInfoMap.get(siteSlug).tags, {}, eachCB);
 }
 
-
 /**
  * Obtains a list of answers for the specified questionId.
+ * Results will be localized in the specified language.
  */
 export function getAnswers(siteSlug, lang, questionId) {
   return get(dbInfoMap.get(siteSlug).answers, { parentId: questionId }, { sort: { score: -1 }} );
 }
 
 /**
- * Adds the specified user to the DB
+ * Obtains the specified user from the DB
+ * Results will be localized in the specified language.
  */
 export function getUser(siteSlug, lang, userId) {
   return getOne(dbInfoMap.get(siteSlug).users, { id: userId });
@@ -158,6 +163,7 @@ export function getUser(siteSlug, lang, userId) {
 
 /**
  * Obtains a list of tags
+ * Results will be localized in the specified language.
  */
 export function getTags(siteSlug, lang) {
   return get(dbInfoMap.get(siteSlug).tags, {} ,{sort: { tagName: 1 }});
