@@ -9,6 +9,7 @@ var Answer = React.createClass({
       <div>Score: {this.props.answer.score.toString()}</div>
       <User id={this.props.answer.ownerUserId}
         siteSlug={this.props.siteSlug}
+        lang={this.props.lang}
         displayName={this.props.answer.ownerDisplayName}/>
       <div dangerouslySetInnerHTML={{ __html: this.props.answer.body}}/>
     </div>;

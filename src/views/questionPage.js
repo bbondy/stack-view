@@ -10,12 +10,14 @@ var QuestionPage = React.createClass({
       <div>Score: {this.props.question.score.toString()}</div>
       <User id={this.props.question.ownerUserId}
         siteSlug={this.props.siteSlug}
+        lang={this.props.lang}
         displayName={this.props.question.ownerDisplayName}/>
       <p dangerouslySetInnerHTML={{ __html: this.props.question.body}}/>
       {
         this.props.answers.map((answer) => <Answer key={answer.id}
           siteSlug={this.props.siteSlug}
           answer={answer}
+          lang={this.props.lang}
           isAccepted={this.props.question.acceptedAnswerId === answer.id}/>)
       }
     </div>;

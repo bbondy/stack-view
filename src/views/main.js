@@ -15,11 +15,14 @@ var Main = React.createClass({
      </head>
      <body>
      { this.props.question ? <QuestionPage siteSlug={this.props.siteSlug}
+       lang={this.props.lang}
        question={this.props.question}
        answers={this.props.answers}/> : null }
      { this.props.user ? <UserPage siteSlug={this.props.siteSlug}
+       lang={this.props.lang}
        user={this.props.user}/> : null }
      { this.props.tags ? <TagPage siteSlug={this.props.siteSlug}
+       lang={this.props.lang}
        tags={this.props.tags}/> : null }
      { !this.props.question && !this.props.user && !this.props.tags ? <IndexPage/> : null }
 
