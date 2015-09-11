@@ -87,6 +87,7 @@ function getStream(collection, lang, filter, eachCB) {
 
 /**
  * Adds the specified question to the DB
+ * Note that there is only 1 entry total, not 1 per language.
  */
 export function addQuestion(siteSlug, question) {
   return set(dbInfoMap.get(siteSlug).questions, { id: question.id }, question);
@@ -94,6 +95,7 @@ export function addQuestion(siteSlug, question) {
 
 /**
  * Adds the specified answer to the DB
+ * Note that there is only 1 entry total, not 1 per language.
  */
 export function addAnswer(siteSlug, answer) {
   return set(dbInfoMap.get(siteSlug).answers, { id: answer.id, parentId: answer.parentId }, answer);
@@ -101,6 +103,7 @@ export function addAnswer(siteSlug, answer) {
 
 /**
  * Adds the specified user to the DB
+ * Note that there is only 1 entry total, not 1 per language.
  */
 export function addUser(siteSlug, user) {
   return set(dbInfoMap.get(siteSlug).users, { id: user.id}, user);
@@ -108,17 +111,10 @@ export function addUser(siteSlug, user) {
 
 /**
  * Adds the specified tag to the DB to the tag list
+ * Note that there is only 1 entry total, not 1 per language.
  */
 export function addTag(siteSlug, tag) {
   return set(dbInfoMap.get(siteSlug).tags, { tagName: tag.tagName}, tag);
-}
-
-/**
- * Obtains the specified question from the DB.
- * Results will be localized in the specified language.
- */
-export function getQuestion(siteSlug, lang, questionId) {
-  return getOne(dbInfoMap.get(siteSlug).questions, { id: questionId });
 }
 
 /**
@@ -126,7 +122,10 @@ export function getQuestion(siteSlug, lang, questionId) {
  * Results will be localized in the specified language.
  */
 export function getQuestionsStream(siteSlug, lang, eachCB) {
-  return getStream(dbInfoMap.get(siteSlug).questions, {}, eachCB);
+  return getStream(dbInfoMap.get(siteSlug).questions, {}, (question) => {
+    // TODO: Normalize question to specified format
+    eachCB(question);
+  });
 }
 
 /**
@@ -134,7 +133,10 @@ export function getQuestionsStream(siteSlug, lang, eachCB) {
  * Results will be localized in the specified language.
  */
 export function getUsersStream(siteSlug, lang, eachCB) {
-  return getStream(dbInfoMap.get(siteSlug).users, {}, eachCB);
+  return getStream(dbInfoMap.get(siteSlug).users, {}, (user) => {
+    // TODO: Normalize user to specified format
+    eachCB(user);
+  });
 }
 
 /**
@@ -142,15 +144,37 @@ export function getUsersStream(siteSlug, lang, eachCB) {
  * Results will be localized in the specified language.
  */
 export function getTagsStream(siteSlug, lang, eachCB) {
-  return getStream(dbInfoMap.get(siteSlug).tags, {}, eachCB);
+  return getStream(dbInfoMap.get(siteSlug).tags, {}, (tag) => {
+    // TODO: Normalize tag to specified format
+    eachCB(tag);
+  });
 }
+
+/**
+ * Obtains the specified question from the DB.
+ * Results will be localized in the specified language.
+ */
+export function getQuestion(siteSlug, lang, questionId) {
+  return new Promise((resolve, reject) => {
+    getOne(dbInfoMap.get(siteSlug).questions, { id: questionId }).then(question => {
+      // TODO: normalize question to localized format
+      resolve(question);
+    }).catch(reject);
+  });
+}
+
 
 /**
  * Obtains a list of answers for the specified questionId.
  * Results will be localized in the specified language.
  */
 export function getAnswers(siteSlug, lang, questionId) {
-  return get(dbInfoMap.get(siteSlug).answers, { parentId: questionId }, { sort: { score: -1 }} );
+  return new Promise((resolve, reject) => {
+    get(dbInfoMap.get(siteSlug).answers, { parentId: questionId }, { sort: { score: -1 }} ).then(answers => {
+      // TODO: normalize answers to localized format
+      resolve(answers);
+    }).catch(reject);
+  });
 }
 
 /**
@@ -158,7 +182,12 @@ export function getAnswers(siteSlug, lang, questionId) {
  * Results will be localized in the specified language.
  */
 export function getUser(siteSlug, lang, userId) {
-  return getOne(dbInfoMap.get(siteSlug).users, { id: userId });
+  return new Promise((resolve, reject) => {
+    getOne(dbInfoMap.get(siteSlug).users, { id: userId }).then(user => {
+      // TODO: normalize user to localized format
+      resolve(user);
+    }).catch(reject);
+  });
 }
 
 /**
@@ -166,7 +195,12 @@ export function getUser(siteSlug, lang, userId) {
  * Results will be localized in the specified language.
  */
 export function getTags(siteSlug, lang) {
-  return get(dbInfoMap.get(siteSlug).tags, {} ,{sort: { tagName: 1 }});
+  return new Promise((resolve, reject) => {
+    get(dbInfoMap.get(siteSlug).tags, {} ,{sort: { tagName: 1 }}).then(tags => {
+      // TODO: normalize tags to localized format
+      resolve(tags);
+    }).catch(reject);
+  });
 }
 
 /**
