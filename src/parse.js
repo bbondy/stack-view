@@ -1,23 +1,19 @@
 let fs = require('fs');
-let PriorityQueue = require('js-priority-queue');
+let PriorityQueue = require('priorityqueuejs');
 import {addUser, addQuestion, addAnswer, addTag, uninitDB} from './datastore.js';
 let strict = true;
 let userMap = new Map();
 let questionIdSet = new Set();
 let siteSlug = 'programmers';
 
-let pq = new PriorityQueue({
-  comparator: function(a, b) {
-    return a.viewCount - b.viewCount;
-  }
-});
+let pq = new PriorityQueue((a, b) => b.viewCount - a.viewCount);
 const maxQuestions = 5;
 
 function queueQuestion(question) {
-  if (pq.length >= maxQuestions) {
-    pq.dequeue();
+  pq.enq(question);
+  if (pq.size() > maxQuestions) {
+    pq.deq();
   }
-  pq.queue(question);
 }
 
 let parseFile = (filePath, onOpenTag) => {
@@ -121,11 +117,12 @@ export let parseQuestions = () => {
       }
       queueQuestion(data);
     }).then(() => {
-      while (pq.length > 0) {
-        let question = pq.dequeue();
+      while (!pq.isEmpty()) {
+        let question = pq.deq();
         let promises = [];
         questionIdSet.add(question.id);
         promises.push(addQuestion(siteSlug, question));
+        console.log('adding question ID', question.id, 'with viewcount of: ', question.viewCount);
         Promise.all(promises).then(resolve).catch(reject);
       }
     });
