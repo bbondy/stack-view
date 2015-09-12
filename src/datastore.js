@@ -76,7 +76,7 @@ function getOne(collection, query, options) {
 /**
  * Calls a callback for each item in a query resultset
  */
-function getStream(collection, lang, filter, eachCB) {
+function getStream(collection, filter, eachCB) {
   return new Promise((resolve, reject) => {
     collection.find(filter, { stream: true })
       .each(eachCB)
