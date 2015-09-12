@@ -17,6 +17,7 @@ sites.forEach(site => {
   dbInfo.questions.index('id',{ unique: true });
   dbInfo.answers.index('id parentId', { unique: true });
   dbInfo.users.index('id', { unique: true });
+  dbInfo.users.index('page');
   dbInfo.tags.index({ 'tagName': 1 }, { unique: true });
   dbInfoMap.set(site.slug, dbInfo);
 });
@@ -165,7 +166,7 @@ export function getQuestion(siteSlug, lang, questionId) {
 
 
 /**
- * Obtains the specified questions from the DB.
+ * Obtains all questions from the DB.
  * Results will be localized in the specified language.
  */
 export function getQuestions(siteSlug, lang) {
@@ -176,6 +177,21 @@ export function getQuestions(siteSlug, lang) {
     }).catch(reject);
   });
 }
+
+/**
+ * Obtains all users from the DB.
+ * Results will be localized in the specified language.
+ */
+export function getUsers(siteSlug, lang, page) {
+  return new Promise((resolve, reject) => {
+    get(dbInfoMap.get(siteSlug).users, { page }).then(users => {
+      // TODO: normalize question to localized format
+      resolve(users);
+    }).catch(reject);
+  });
+}
+
+
 
 
 

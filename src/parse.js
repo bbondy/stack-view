@@ -7,7 +7,9 @@ let questionIdSet = new Set();
 let siteSlug = 'programmers';
 
 let pq = new PriorityQueue((a, b) => b.viewCount - a.viewCount);
+
 const maxQuestions = 5;
+const usersPerPage = 5;
 
 function queueQuestion(question) {
   pq.enq(question);
@@ -70,7 +72,10 @@ export let parseUsers = parseFile.bind(null, 'Users.xml', (node) => {
     return Promise.resolve();
   }
   userMap.set(user.id, user);
-  return Promise.resolve();
+
+  // Add in the page for per page querying
+  user.page = Math.ceil(userMap.size / usersPerPage);
+
   return addUser(siteSlug, user).catch((err) => {
       console.error(`Could not add user id: ${user.id}, err: ${err}`);
   });
@@ -197,5 +202,4 @@ parseUsers().then(parsePosts).then(parseTags).then(uninitDB).catch((err) => {
 });
 */
 
-//parseUsers().then(parseQuestions).then(uninitDB);
-parseQuestions().then(uninitDB);
+parseUsers().then(parseQuestions).then(uninitDB);

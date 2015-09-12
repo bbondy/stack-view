@@ -9,12 +9,12 @@ var Question = React.createClass({
   }
 });
 
-var QuestionPage = React.createClass({
+var QuestionsPage = React.createClass({
   render: function() {
     return <div>
       <h1>Questions</h1>
       {
-        this.props.questions.map((question) => <Question key={question.id}
+        this.props.questions.map(question => <Question key={question.id}
           siteSlug={this.props.siteSlug}
           question={question}
           lang={this.props.lang} />)
@@ -23,5 +23,5 @@ var QuestionPage = React.createClass({
   }
 });
 
-export default QuestionPage;
+export default QuestionsPage;
 
