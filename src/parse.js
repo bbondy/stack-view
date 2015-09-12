@@ -1,17 +1,33 @@
-var fs = require('fs');
+let fs = require('fs');
+let PriorityQueue = require('js-priority-queue');
 import {addUser, addQuestion, addAnswer, addTag, uninitDB} from './datastore.js';
-var strict = true;
-var userMap = new Map();
+let strict = true;
+let userMap = new Map();
+let questionIdSet = new Set();
 let siteSlug = 'programmers';
+
+let pq = new PriorityQueue({
+  comparator: function(a, b) {
+    return a.viewCount - b.viewCount;
+  }
+});
+const maxQuestions = 5;
+
+function queueQuestion(question) {
+  if (pq.length >= maxQuestions) {
+    pq.dequeue();
+  }
+  pq.queue(question);
+}
 
 let parseFile = (filePath, onOpenTag) => {
   return new Promise((resolve, reject) => {
-    var saxStream = require('sax').createStream(strict, {})
+    var saxStream = require('sax').createStream(strict, {});
     let promises = [];
     saxStream.on('error', (e) => {
       // unhandled errors will throw, since this is a proper node
       // event emitter.
-      console.error('error!', e)
+      console.error('error!', e);
       // clear the error
       //this._parser.error = null
       //this._parser.resume()
@@ -19,7 +35,10 @@ let parseFile = (filePath, onOpenTag) => {
     });
 
     saxStream.on('opentag', (node) => {
-      promises.push(onOpenTag(node));
+      let p = onOpenTag(node);
+      if (p) {
+        promises.push(p);
+      }
     });
 
     saxStream.on('end', () => {
@@ -55,18 +74,71 @@ export let parseUsers = parseFile.bind(null, 'Users.xml', (node) => {
     return Promise.resolve();
   }
   userMap.set(user.id, user);
+  return Promise.resolve();
   return addUser(siteSlug, user).catch((err) => {
-      console.error(`Could not add user id: ${id}`);
+      console.error(`Could not add user id: ${user.id}, err: ${err}`);
   });
 });
 
-export let parsePosts = parseFile.bind(null, 'Posts.xml', (node) => {
+export let parseQuestions = () => {
+  return new Promise((resolve, reject) => {
+    parseFile('Posts.xml', (node) => {
+      let data = {
+        id: node.attributes.Id,
+        postTypeId: Number(node.attributes.PostTypeId),
+        //creationDate: new Date(node.attributes.CreationDate),
+        score: Number(node.attributes.Score),
+        viewCount: Number(node.attributes.ViewCount),
+        body: node.attributes.Body,
+        ownerUserId: node.attributes.OwnerUserId,
+        // Data dump doesn't always include this field!
+        // ownerDisplayName: node.attributes.OwnerDisplayName,
+        //lastEditorUserId: node.attributes.LastEditorUserId,
+        lastEditDate: new Date(node.attributes.LastEditDate),
+        //lastActivityDate: new Date(node.attributes.LastActivityDate),
+        title: node.attributes.Title,
+        tags: node.attributes.Tags,
+        //answerCount: Number(node.attributes.AnswerCount),
+        //commentCount: Number(node.attributes.CommentCount),
+        //favoriteCount: Number(node.attributes.favoriteCount),
+        closedDate: new Date(node.attributes.ClosedDate),
+        //communityOwnedDate: new Date(node.attributes.CommunityOwnedDate),
+      };
+
+      // Since the data dump doesn't always include it, set the display name here
+      let user = userMap.get(data.ownerUserId);
+      if (user) {
+        data.ownerDisplayName = user.displayName;
+      }
+
+      if (data.postTypeId !== 1) {
+        return;
+      }
+      data.acceptedAnswerId = node.attributes.AcceptedAnswerId;
+      if (!data.id) {
+        console.warn('question has blanks for question: ', data);
+        return;
+      }
+      queueQuestion(data);
+    }).then(() => {
+      while (pq.length > 0) {
+        let question = pq.dequeue();
+        let promises = [];
+        questionIdSet.add(question.id);
+        promises.push(addQuestion(siteSlug, question));
+        Promise.all(promises).then(resolve).catch(reject);
+      }
+    });
+  });
+};
+
+export let parseAnswers = parseFile.bind(null, 'Posts.xml', (node) => {
   let data = {
     id: node.attributes.Id,
     postTypeId: Number(node.attributes.PostTypeId),
     //creationDate: new Date(node.attributes.CreationDate),
     score: Number(node.attributes.Score),
-    //viewCount: Number(node.attributes.ViewCount),
+    viewCount: Number(node.attributes.ViewCount),
     body: node.attributes.Body,
     ownerUserId: node.attributes.OwnerUserId,
     // Data dump doesn't always include this field!
@@ -89,25 +161,17 @@ export let parsePosts = parseFile.bind(null, 'Posts.xml', (node) => {
     data.ownerDisplayName = user.displayName;
   }
 
-  if (data.postTypeId === 1) {
-    data.acceptedAnswerId = node.attributes.AcceptedAnswerId;
-    if (!data.id) {
-      console.warn('question has blanks for question: ', question);
-      return;
-    }
-    return addQuestion(siteSlug, data).catch((err) => {
-      console.error(`Could not add questionid: ${data.id}: ${err}`);
-    });
-  } else if (data.postTypeId === 2) {
-    data.parentId = node.attributes.ParentId;
-    if (!data.id || !data.parentId) {
-      console.warn('answer has blanks for answer: ', answer);
-      return;
-    }
-    return addAnswer(siteSlug, data).catch((err) => {
-      console.error(`Could not add answer for question: ${data.parentId}: ${err}`);
-    });
+  if (data.postTypeId !== 2) {
+    return;
   }
+  data.parentId = node.attributes.ParentId;
+  if (!data.id || !data.parentId) {
+    console.warn('answer has blanks for answer: ', data);
+    return;
+  }
+  return addAnswer(siteSlug, data).catch((err) => {
+    console.error(`Could not add answer for question: ${data.parentId}: ${err}`);
+  });
 });
 
 export let parseTags = parseFile.bind(null, 'Tags.xml', (node) => {
@@ -130,6 +194,11 @@ export let parseTags = parseFile.bind(null, 'Tags.xml', (node) => {
   });
 });
 
+/*
 parseUsers().then(parsePosts).then(parseTags).then(uninitDB).catch((err) => {
   console.error('err: ', err);
 });
+*/
+
+//parseUsers().then(parseQuestions).then(uninitDB);
+parseQuestions().then(uninitDB);

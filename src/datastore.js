@@ -190,10 +190,7 @@ export function getUser(siteSlug, lang, userId) {
   });
 }
 
-/**
- * Obtains a list of tags
- * Results will be localized in the specified language.
- */
+
 export function getTags(siteSlug, lang) {
   return new Promise((resolve, reject) => {
     get(dbInfoMap.get(siteSlug).tags, {} ,{sort: { tagName: 1 }}).then(tags => {

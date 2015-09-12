@@ -29,6 +29,7 @@ const SERVER_FILES = [
   SRC_ROOT + 'server.js',
   SRC_ROOT + 'secrets.js',
   SRC_ROOT + 'config.js',
+  SRC_ROOT + 'parse.js',
   SRC_ROOT + '*views*/*.js',
 ];
 
