@@ -43,6 +43,7 @@ function genSitemapForSite(lang, slug) {
       resolve();
     }).catch((err) => {
       console.error(err);
+      reject(err);
     });
   });
 }
@@ -50,7 +51,7 @@ function genSitemapForSite(lang, slug) {
 let promises = [];
 sites.forEach((site) => {
   site.langs.forEach(lang => {
-    promises.push(genSitemapForSite(lang, site.slug))
+    promises.push(genSitemapForSite(lang, site.slug));
   });
 });
 Promise.all(promises).then(uninitDB);

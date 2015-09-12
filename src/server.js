@@ -2,7 +2,7 @@ require('babel/polyfill');
 let Path = require('path');
 let Hapi = require('hapi');
 var Inert = require('inert');
-import {getQuestion, getAnswers, getUser, getTags} from './datastore.js';
+import {getQuestions, getQuestion, getAnswers, getUser, getTags} from './datastore.js';
 import {cookiePassword} from './secrets.js';
 
 let port = process.env.PORT || 20119;
@@ -42,6 +42,30 @@ server.route( {
   }
 });
 
+server.route({
+  method: 'GET',
+  path: '/{siteSlug}/{lang}/questions',
+  handler: function(request, reply) {
+    getQuestions(request.params.siteSlug, request.params.lang).then(questions => {
+      var context = {
+        title: 'Questions',
+        siteSlug: request.params.siteSlug,
+        lang: request.params.lang,
+        questions,
+      };
+      var renderOpts = { runtimeOptions: {} };
+      server.render('main', context, renderOpts, function (err, output) {
+        if (err) {
+          reply(err).code(500);
+          return;
+        }
+        reply(output).code(200);
+      });
+    }).catch((err) => {
+      console.log('questions error:', err);
+    });
+  }
+});
 
 server.route({
   method: 'GET',

@@ -1,11 +1,5 @@
 var React = require('react');
-import {sites} from '../config.js';
-
-const userUrl = (siteSlug, lang, userId) => `/${siteSlug}/${lang}/users/${userId}`;
-const seUserUrl = (siteSlug, userId) => {
-  let foundSite = sites.find(site => siteSlug === site.slug);
-  return `${foundSite.seUrl}users/${userId}`;
-};
+import {userUrl, seUserUrl} from '../urlUtil.js';
 
 var User = React.createClass({
   render: function() {

@@ -1,6 +1,7 @@
 var React = require('react');
 import UserPage from './userPage.js';
 import QuestionPage from './questionPage.js';
+import QuestionsPage from './questionsPage.js';
 import TagPage from './tagPage.js';
 import IndexPage from './indexPage.js';
 
@@ -14,6 +15,9 @@ var Main = React.createClass({
         <script src='/js/analytics.js' async='async'/>
      </head>
      <body>
+     { this.props.questions ? <QuestionsPage siteSlug={this.props.siteSlug}
+       lang={this.props.lang}
+       questions={this.props.questions} /> : null }
      { this.props.question ? <QuestionPage siteSlug={this.props.siteSlug}
        lang={this.props.lang}
        question={this.props.question}
@@ -24,7 +28,7 @@ var Main = React.createClass({
      { this.props.tags ? <TagPage siteSlug={this.props.siteSlug}
        lang={this.props.lang}
        tags={this.props.tags}/> : null }
-     { !this.props.question && !this.props.user && !this.props.tags ? <IndexPage/> : null }
+     { !this.props.question && !this.props.user && !this.props.tags && !this.props.questions ? <IndexPage/> : null }
 
      </body>
    </html>;

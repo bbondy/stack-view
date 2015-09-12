@@ -165,6 +165,22 @@ export function getQuestion(siteSlug, lang, questionId) {
 
 
 /**
+ * Obtains the specified questions from the DB.
+ * Results will be localized in the specified language.
+ */
+export function getQuestions(siteSlug, lang) {
+  return new Promise((resolve, reject) => {
+    get(dbInfoMap.get(siteSlug).questions, {}).then(questions => {
+      // TODO: normalize question to localized format
+      resolve(questions);
+    }).catch(reject);
+  });
+}
+
+
+
+
+/**
  * Obtains a list of answers for the specified questionId.
  * Results will be localized in the specified language.
  */

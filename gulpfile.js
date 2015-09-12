@@ -25,11 +25,7 @@ const DIST_EXT = './dist/public/js/ext/';
 const DIST_CSS_ROOT = './dist/public/css';
 const TEST_ROOT = './test/';
 const SERVER_FILES = [
-  SRC_ROOT + 'datastore.js',
-  SRC_ROOT + 'server.js',
-  SRC_ROOT + 'secrets.js',
-  SRC_ROOT + 'config.js',
-  SRC_ROOT + 'parse.js',
+  SRC_ROOT + '*.js',
   SRC_ROOT + '*views*/*.js',
 ];
 
