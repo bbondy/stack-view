@@ -86,6 +86,29 @@ let getUsersHandler = (request, reply) => {
 
 server.route({
   method: 'GET',
+  path: '/{siteSlug}/{lang}',
+  handler: (request, reply) => {
+     var context = {
+      title: 'Site info', // TODO: Get a better name here from config
+      siteSlug: request.params.siteSlug,
+      lang: request.params.lang,
+      siteBasePage: true,
+    };
+    var renderOpts = { runtimeOptions: {} };
+    server.render('main', context, renderOpts, function (err, output) {
+      if (err) {
+        reply(err).code(500);
+        return;
+      }
+      reply(output).code(200);
+    });
+
+  },
+});
+
+
+server.route({
+  method: 'GET',
   path: '/{siteSlug}/{lang}/questions',
   handler: getQuestionsHandler,
 });
