@@ -124,9 +124,9 @@ export let parseQuestions = () => {
 
       queueQuestion(data);
     }).then(() => {
+      let promises = [];
       while (!pq.isEmpty()) {
         let question = pq.deq();
-        let promises = [];
         questionIdSet.add(question.id);
 
         // Add in the page for per page querying
