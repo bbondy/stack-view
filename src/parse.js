@@ -15,8 +15,10 @@ let siteSlug = 'programmers';
 let questionWordCount = 0;
 let answerWordCount = 0;
 let userWordCount = 0;
+let questionViews = 0;
 
-let pq = new PriorityQueue((a, b) => b.viewCount - a.viewCount);
+let scoreQuestion = question => question.ViewCount * 0.01 * 0.25 - question.wordCount * 0.12;
+let pq = new PriorityQueue((a, b) => scoreQuestion(b) - scoreQuestion(a));
 
 const maxQuestions = 20;
 const usersPerPage = 5;
@@ -161,6 +163,9 @@ export let parseQuestions = () => {
         }
 
         questionWordCount += question.title.split(' ').length + question.body.split(' ').length;
+        if (question.viewCount) {
+          questionViews += question.viewCount;
+        }
 
         // Add in the page for per page querying
         question.page = Math.ceil(questionIdSet.size / questionsPerPage);
@@ -313,6 +318,7 @@ export let insertStats = () => {
     questionWordCount,
     answerWordCount,
     userWordCount,
+    questionViews,
   };
   console.log('Stats:', stats);
   return setStats(siteSlug, stats);
