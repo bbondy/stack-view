@@ -92,7 +92,7 @@ server.route({
       title: 'Site info', // TODO: Get a better name here from config
       siteSlug: request.params.siteSlug,
       lang: request.params.lang,
-      siteBasePage: true,
+      siteLangPage: true,
     };
     var renderOpts = { runtimeOptions: {} };
     server.render('main', context, renderOpts, function (err, output) {
@@ -106,6 +106,26 @@ server.route({
   },
 });
 
+server.route({
+  method: 'GET',
+  path: '/{siteSlug}',
+  handler: (request, reply) => {
+     var context = {
+      title: 'Site info', // TODO: Get a better name here from config
+      siteSlug: request.params.siteSlug,
+      siteBasePage: true,
+    };
+    var renderOpts = { runtimeOptions: {} };
+    server.render('main', context, renderOpts, function (err, output) {
+      if (err) {
+        reply(err).code(500);
+        return;
+      }
+      reply(output).code(200);
+    });
+
+  },
+});
 
 server.route({
   method: 'GET',

@@ -1,6 +1,9 @@
 import {sites} from './config.js';
 
 
+
+export const siteUrl = (siteSlug, lang) => lang !== undefined ? `/${siteSlug}/${lang}` : `/${siteSlug}`;
+
 export const userUrl = (siteSlug, lang, userId) => userId !== undefined ? `/${siteSlug}/${lang}/users/${userId}` : `/${siteSlug}/${lang}/users`;
 export const questionUrl = (siteSlug, lang, questionId) => questionId !== undefined ? `/${siteSlug}/${lang}/questions/${questionId}` : `/${siteSlug}/${lang}/questions`;
 

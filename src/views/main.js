@@ -4,7 +4,8 @@ import UsersPage from './usersPage.js';
 import QuestionPage from './questionPage.js';
 import QuestionsPage from './questionsPage.js';
 import TagPage from './tagPage.js';
-import SitePage from './sitePage.js';
+import SitePerLangPage from './sitePerLangPage.js';
+import SiteBasePage from './siteBasePage.js';
 import IndexPage from './indexPage.js';
 
 var Main = React.createClass({
@@ -17,8 +18,9 @@ var Main = React.createClass({
         <script src='/js/analytics.js' async='async'/>
      </head>
      <body>
-     { this.props.siteBasePage ? <SitePage siteSlug={this.props.siteSlug}
+     { this.props.siteLangPage ? <SitePerLangPage siteSlug={this.props.siteSlug}
        lang={this.props.lang}/> : null }
+     { this.props.siteBasePage ? <SiteBasePage siteSlug={this.props.siteSlug}/> : null }
      { this.props.questions ? <QuestionsPage siteSlug={this.props.siteSlug}
        lang={this.props.lang}
        questions={this.props.questions} /> : null }
@@ -35,7 +37,7 @@ var Main = React.createClass({
      { this.props.tags ? <TagPage siteSlug={this.props.siteSlug}
        lang={this.props.lang}
        tags={this.props.tags}/> : null }
-     { !this.props.question && !this.props.user && !this.props.tags && !this.props.questions && !this.props.users && !this.props.siteBasePage ? <IndexPage/> : null }
+     { !this.props.question && !this.props.user && !this.props.tags && !this.props.questions && !this.props.users && !this.props.siteLangPage && !this.props.siteBasePage ? <IndexPage/> : null }
 
      </body>
    </html>;

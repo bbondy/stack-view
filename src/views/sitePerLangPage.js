@@ -1,7 +1,7 @@
 var React = require('react');
 import {userUrl, questionUrl} from '../urlUtil.js';
 
-var SitePage = React.createClass({
+var SitePerLangPage = React.createClass({
   render: function() {
     return <div>
     <h1>{this.props.title}</h1>
@@ -11,4 +11,4 @@ var SitePage = React.createClass({
   }
 });
 
-export default SitePage;
+export default SitePerLangPage;
