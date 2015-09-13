@@ -1,11 +1,5 @@
 var React = require('react');
-import {sites} from '../config.js';
-import {siteUrl} from '../urlUtil.js';
-
-export const siteLangs = (siteSlug) => {
-  let foundSite = sites.find(site => siteSlug === site.slug);
-  return foundSite.langs;
-};
+import {siteUrl, siteLangs} from '../siteUtil.js';
 
 var SiteLink = React.createClass({
   render: function() {

@@ -1,5 +1,5 @@
 var React = require('react');
-import {questionUrl} from '../urlUtil.js';
+import {questionUrl} from '../siteUtil.js';
 
 var Question = React.createClass({
   render: function() {

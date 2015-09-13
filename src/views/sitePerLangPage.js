@@ -1,5 +1,5 @@
 var React = require('react');
-import {userUrl, questionUrl} from '../urlUtil.js';
+import {userUrl, questionUrl} from '../siteUtil.js';
 
 var SitePerLangPage = React.createClass({
   render: function() {

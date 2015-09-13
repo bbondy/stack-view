@@ -108,8 +108,26 @@ server.route({
 
 server.route({
   method: 'GET',
+  path: '/',
+  handler: function(request, reply) {
+    var context = {
+      title: 'Main',
+    };
+    var renderOpts = { runtimeOptions: {} };
+    server.render('main', context, renderOpts, function (err, output) {
+      if (err) {
+        reply(err).code(500);
+        return;
+      }
+      reply(output).code(200);
+    });
+  }
+});
+
+server.route({
+  method: 'GET',
   path: '/{siteSlug}',
-  handler: (request, reply) => {
+  handler: function(request, reply) {
      var context = {
       title: 'Site info', // TODO: Get a better name here from config
       siteSlug: request.params.siteSlug,
@@ -123,7 +141,6 @@ server.route({
       }
       reply(output).code(200);
     });
-
   },
 });
 
@@ -200,24 +217,6 @@ server.route({
       });
     }).catch((err) => {
       console.log('question error:', err);
-    });
-  }
-});
-
-server.route({
-  method: 'GET',
-  path: '/',
-  handler: function(request, reply) {
-    var context = {
-      title: 'Main',
-    };
-    var renderOpts = { runtimeOptions: {} };
-    server.render('main', context, renderOpts, function (err, output) {
-      if (err) {
-        reply(err).code(500);
-        return;
-      }
-      reply(output).code(200);
     });
   }
 });

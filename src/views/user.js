@@ -1,5 +1,5 @@
 var React = require('react');
-import {userUrl, seUserUrl} from '../urlUtil.js';
+import {userUrl, seUserUrl} from '../siteUtil.js';
 
 var User = React.createClass({
   render: function() {

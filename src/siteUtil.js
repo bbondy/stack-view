@@ -1,7 +1,5 @@
 import {sites} from './config.js';
 
-
-
 export const siteUrl = (siteSlug, lang) => lang !== undefined ? `/${siteSlug}/${lang}` : `/${siteSlug}`;
 
 export const userUrl = (siteSlug, lang, userId) => userId !== undefined ? `/${siteSlug}/${lang}/users/${userId}` : `/${siteSlug}/${lang}/users`;
@@ -15,3 +13,9 @@ export const seQuestionUrl = (siteSlug, userId) => {
   let foundSite = sites.find(site => siteSlug === site.slug);
   return `${foundSite.seUrl}questions/${userId}`;
 };
+
+export const siteLangs = (siteSlug) => {
+  let foundSite = sites.find(site => siteSlug === site.slug);
+  return foundSite.langs;
+};
+
