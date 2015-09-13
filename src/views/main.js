@@ -13,9 +13,9 @@ var Main = React.createClass({
     return <html>
       <head>
         <title>{this.props.title}</title>
-        <link rel='stylesheet' href='/css/main.css'/>
-        <link rel='stylesheet' href='/css/font-awesome/font-awesome.css'/>
-        <script src='/js/analytics.js' async='async'/>
+        <link rel='stylesheet' href='/static/css/main.css'/>
+        <link rel='stylesheet' href='/static/css/font-awesome/font-awesome.css'/>
+        <script src='/static/js/analytics.js' async='async'/>
      </head>
      <body>
      { this.props.siteLangPage ? <SitePerLangPage siteSlug={this.props.siteSlug}

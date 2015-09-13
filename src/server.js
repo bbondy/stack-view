@@ -31,17 +31,7 @@ server.register(Inert, function () {
 
 server.connection({ port });
 
-server.route( {
-  method: 'GET',
-  path: '/{param*}',
-  handler: {
-    directory: {
-      path: './'
-    }
-  }
-});
-
-let renderReact = (reply, context) => {
+let renderReact = function(reply, context) {
   var renderOpts = { runtimeOptions: {} };
   server.render('main', context, renderOpts, function (err, output) {
     if (err) {
@@ -52,7 +42,7 @@ let renderReact = (reply, context) => {
   });
 };
 
-let getQuestionsHandler = (request, reply) => {
+let getQuestionsHandler = function(request, reply) {
   getQuestions(request.params.siteSlug, request.params.lang, request.params.page || 1).then(questions => {
     renderReact(reply, {
       title: 'Questions',
@@ -65,7 +55,7 @@ let getQuestionsHandler = (request, reply) => {
   });
 };
 
-let getUsersHandler = (request, reply) => {
+let getUsersHandler = function(request, reply) {
   getUsers(request.params.siteSlug, request.params.lang, request.params.page || 1).then(users => {
     renderReact(reply, {
       title: 'Users',
@@ -116,24 +106,24 @@ server.route({
 server.route({
   method: 'GET',
   path: '/{siteSlug}/{lang}/questions',
-  handler: getQuestionsHandler,
+  handler: getQuestionsHandler.bind(this),
 });
 server.route({
   method: 'GET',
   path: '/{siteSlug}/{lang}/questions/page/{page}',
-  handler: getQuestionsHandler,
+  handler: getQuestionsHandler.bind(this),
 });
 
 server.route({
   method: 'GET',
   path: '/{siteSlug}/{lang}/users',
-  handler: getUsersHandler,
+  handler: getUsersHandler.bind(this),
 });
 
 server.route({
   method: 'GET',
   path: '/{siteSlug}/{lang}/users/page/{page}',
-  handler: getUsersHandler,
+  handler: getUsersHandler.bind(this),
 });
 
 server.route({
