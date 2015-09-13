@@ -5,6 +5,7 @@ var Answer = React.createClass({
   render: function() {
     return <div className='sectionContainer'>
       <div dangerouslySetInnerHTML={{ __html: this.props.answer.body}}/>
+      <span>Posted by:</span>
       <User id={this.props.answer.ownerUserId}
         siteSlug={this.props.siteSlug}
         lang={this.props.lang}

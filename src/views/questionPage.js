@@ -8,6 +8,7 @@ var Question = React.createClass({
     return <div className='sectionContainer'>
       <h1>{this.props.question.title}</h1>
       <p dangerouslySetInnerHTML={{ __html: this.props.question.body}}/>
+      <span>Posted by:</span>
       <User id={this.props.question.ownerUserId}
         siteSlug={this.props.siteSlug}
         lang={this.props.lang}
