@@ -29,7 +29,6 @@ server.register(require('vision'), function(err) {
 server.register(Inert, function () {
 }); // requires a callback function but can be blank
 
-
 server.connection({ port });
 
 server.route( {
@@ -42,21 +41,24 @@ server.route( {
   }
 });
 
+let renderReact = (reply, context) => {
+  var renderOpts = { runtimeOptions: {} };
+  server.render('main', context, renderOpts, function (err, output) {
+    if (err) {
+      reply(err).code(500);
+      return;
+    }
+    reply(output).code(200);
+  });
+};
+
 let getQuestionsHandler = (request, reply) => {
   getQuestions(request.params.siteSlug, request.params.lang, request.params.page || 1).then(questions => {
-    var context = {
+    renderReact(reply, {
       title: 'Questions',
       siteSlug: request.params.siteSlug,
       lang: request.params.lang,
       questions,
-    };
-    var renderOpts = { runtimeOptions: {} };
-    server.render('main', context, renderOpts, function (err, output) {
-      if (err) {
-        reply(err).code(500);
-        return;
-      }
-      reply(output).code(200);
     });
   }).catch((err) => {
     console.log('questions error:', err);
@@ -65,19 +67,11 @@ let getQuestionsHandler = (request, reply) => {
 
 let getUsersHandler = (request, reply) => {
   getUsers(request.params.siteSlug, request.params.lang, request.params.page || 1).then(users => {
-    var context = {
+    renderReact(reply, {
       title: 'Users',
       siteSlug: request.params.siteSlug,
       lang: request.params.lang,
       users,
-    };
-    var renderOpts = { runtimeOptions: {} };
-    server.render('main', context, renderOpts, function (err, output) {
-      if (err) {
-        reply(err).code(500);
-        return;
-      }
-      reply(output).code(200);
     });
   }).catch((err) => {
     console.log('users error:', err);
@@ -88,21 +82,12 @@ server.route({
   method: 'GET',
   path: '/{siteSlug}/{lang}',
   handler: (request, reply) => {
-     var context = {
+    renderReact(reply, {
       title: 'Site info', // TODO: Get a better name here from config
       siteSlug: request.params.siteSlug,
       lang: request.params.lang,
       siteLangPage: true,
-    };
-    var renderOpts = { runtimeOptions: {} };
-    server.render('main', context, renderOpts, function (err, output) {
-      if (err) {
-        reply(err).code(500);
-        return;
-      }
-      reply(output).code(200);
     });
-
   },
 });
 
@@ -110,16 +95,8 @@ server.route({
   method: 'GET',
   path: '/',
   handler: function(request, reply) {
-    var context = {
+    renderReact(reply, {
       title: 'Main',
-    };
-    var renderOpts = { runtimeOptions: {} };
-    server.render('main', context, renderOpts, function (err, output) {
-      if (err) {
-        reply(err).code(500);
-        return;
-      }
-      reply(output).code(200);
     });
   }
 });
@@ -128,18 +105,10 @@ server.route({
   method: 'GET',
   path: '/{siteSlug}',
   handler: function(request, reply) {
-     var context = {
+    renderReact(reply, {
       title: 'Site info', // TODO: Get a better name here from config
       siteSlug: request.params.siteSlug,
       siteBasePage: true,
-    };
-    var renderOpts = { runtimeOptions: {} };
-    server.render('main', context, renderOpts, function (err, output) {
-      if (err) {
-        reply(err).code(500);
-        return;
-      }
-      reply(output).code(200);
     });
   },
 });
@@ -175,20 +144,12 @@ server.route({
         getAnswers(request.params.siteSlug, request.params.lang, request.params.id)
     ]).then((data) => {
       let [question, answers] = data;
-      var context = {
+      renderReact(reply, {
         title: question.title,
         siteSlug: request.params.siteSlug,
         lang: request.params.lang,
         question,
         answers,
-      };
-      var renderOpts = { runtimeOptions: {} };
-      server.render('main', context, renderOpts, function (err, output) {
-        if (err) {
-          reply(err).code(500);
-          return;
-        }
-        reply(output).code(200);
       });
     }).catch((err) => {
       console.log('question error:', err);
@@ -201,19 +162,11 @@ server.route({
   path: '/{siteSlug}/{lang}/users/{id}',
   handler: function(request, reply) {
     getUser(request.params.siteSlug, request.params.lang, request.params.id).then((user) => {
-      var context = {
+      renderReact(reply, {
         title: user.displayName,
         siteSlug: request.params.siteSlug,
         lang: request.params.lang,
         user,
-      };
-      var renderOpts = { runtimeOptions: {} };
-      server.render('main', context, renderOpts, function (err, output) {
-        if (err) {
-          reply(err).code(500);
-          return;
-        }
-        reply(output).code(200);
       });
     }).catch((err) => {
       console.log('question error:', err);
@@ -226,19 +179,11 @@ server.route({
   path: '/{siteSlug}/{lang}/tags',
   handler: function(request, reply) {
     getTags(request.params.siteSlug, request.params.lang).then((tags) => {
-      var context = {
+      renderReact(reply, {
         title: 'Tags',
         siteSlug: request.params.siteSlug,
         lang: request.params.lang,
         tags,
-      };
-      var renderOpts = { runtimeOptions: {} };
-      server.render('main', context, renderOpts, function (err, output) {
-        if (err) {
-          reply(err).code(500);
-          return;
-        }
-        reply(output).code(200);
       });
     }).catch((err) => {
       console.log('tags error: ', err);
