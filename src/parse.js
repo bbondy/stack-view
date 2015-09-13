@@ -2,8 +2,12 @@ let fs = require('fs');
 let PriorityQueue = require('priorityqueuejs');
 import {addUser, addQuestion, addAnswer, addTag, uninitDB} from './datastore.js';
 let strict = true;
-let userMap = new Map();
+let allUsersMap = new Map();
 let questionIdSet = new Set();
+let userIdSet = new Set();
+let acceptedAnswerIdSet = new Set();
+// Maps a question ID to a prioirty queue of answers
+let answersMap = new Map();
 let siteSlug = 'programmers';
 
 let pq = new PriorityQueue((a, b) => b.viewCount - a.viewCount);
@@ -34,6 +38,9 @@ let parseFile = (filePath, onOpenTag) => {
     });
 
     saxStream.on('opentag', (node) => {
+      if (node.name !== 'row') {
+        return;
+      }
       let p = onOpenTag(node);
       if (p) {
         promises.push(p);
@@ -42,6 +49,7 @@ let parseFile = (filePath, onOpenTag) => {
 
     saxStream.on('end', () => {
       // parser stream is done, and ready to have more stuff written to it.
+      console.log('waiting for all promises for file:', filePath);
       Promise.all(promises).then(resolve).catch((err) => console.error('Promise.all err is: ', err));
     });
 
@@ -72,14 +80,7 @@ export let parseUsers = parseFile.bind(null, 'Users.xml', (node) => {
     console.warn('user has blanks for user: ', user);
     return Promise.resolve();
   }
-  userMap.set(user.id, user);
-
-  // Add in the page for per page querying
-  user.page = Math.ceil(userMap.size / usersPerPage);
-
-  return addUser(siteSlug, user).catch((err) => {
-      console.error(`Could not add user id: ${user.id}, err: ${err}`);
-  });
+  allUsersMap.set(user.id, user);
 });
 
 export let parseQuestions = () => {
@@ -108,7 +109,7 @@ export let parseQuestions = () => {
       };
 
       // Since the data dump doesn't always include it, set the display name here
-      let user = userMap.get(data.ownerUserId);
+      let user = allUsersMap.get(data.ownerUserId);
       if (user) {
         data.ownerDisplayName = user.displayName;
       }
@@ -128,58 +129,107 @@ export let parseQuestions = () => {
       while (!pq.isEmpty()) {
         let question = pq.deq();
         questionIdSet.add(question.id);
+        if (question.ownerUserId) {
+          userIdSet.add(question.ownerUserId);
+        } else {
+          console.warn('null user specified for question:', question);
+        }
+        if (question.acceptedAnswerId) {
+          acceptedAnswerIdSet.add(question.acceptedAnswerId);
+        }
 
         // Add in the page for per page querying
         question.page = Math.ceil(questionIdSet.size / questionsPerPage);
         promises.push(addQuestion(siteSlug, question));
       }
-      // console.log('adding question ID', question.id, 'with viewcount of: ', question.viewCount);
+      console.log('waiting for all questions to insert');
       Promise.all(promises).then(resolve).catch(reject);
-    });
+    }).catch(err => console.error('parseQuestions error: ', err));
   });
 };
 
-export let parseAnswers = parseFile.bind(null, 'Posts.xml', (node) => {
-  let data = {
-    id: node.attributes.Id,
-    postTypeId: Number(node.attributes.PostTypeId),
-    //creationDate: new Date(node.attributes.CreationDate),
-    score: Number(node.attributes.Score),
-    viewCount: Number(node.attributes.ViewCount),
-    body: node.attributes.Body,
-    ownerUserId: node.attributes.OwnerUserId,
-    // Data dump doesn't always include this field!
-    // ownerDisplayName: node.attributes.OwnerDisplayName,
-    //lastEditorUserId: node.attributes.LastEditorUserId,
-    lastEditDate: new Date(node.attributes.LastEditDate),
-    //lastActivityDate: new Date(node.attributes.LastActivityDate),
-    title: node.attributes.Title,
-    tags: node.attributes.Tags,
-    //answerCount: Number(node.attributes.AnswerCount),
-    //commentCount: Number(node.attributes.CommentCount),
-    //favoriteCount: Number(node.attributes.favoriteCount),
-    closedDate: new Date(node.attributes.ClosedDate),
-    //communityOwnedDate: new Date(node.attributes.CommunityOwnedDate),
-  };
+export let parseAnswers = () => {
+  return new Promise((resolve, reject) => {
+    parseFile('Posts.xml', (node) => {
+      let data = {
+        id: node.attributes.Id,
+        postTypeId: Number(node.attributes.PostTypeId),
+        //creationDate: new Date(node.attributes.CreationDate),
+        score: Number(node.attributes.Score),
+        viewCount: Number(node.attributes.ViewCount),
+        body: node.attributes.Body,
+        ownerUserId: node.attributes.OwnerUserId,
+        // Data dump doesn't always include this field!
+        // ownerDisplayName: node.attributes.OwnerDisplayName,
+        //lastEditorUserId: node.attributes.LastEditorUserId,
+        lastEditDate: new Date(node.attributes.LastEditDate),
+        //lastActivityDate: new Date(node.attributes.LastActivityDate),
+        title: node.attributes.Title,
+        tags: node.attributes.Tags,
+        //answerCount: Number(node.attributes.AnswerCount),
+        //commentCount: Number(node.attributes.CommentCount),
+        //favoriteCount: Number(node.attributes.favoriteCount),
+        closedDate: new Date(node.attributes.ClosedDate),
+        //communityOwnedDate: new Date(node.attributes.CommunityOwnedDate),
+      };
 
-  // Since the data dump doesn't always include it, set the display name here
-  let user = userMap.get(data.ownerUserId);
-  if (user) {
-    data.ownerDisplayName = user.displayName;
-  }
+      // Since the data dump doesn't always include it, set the display name here
+      let user = allUsersMap.get(data.ownerUserId);
+      if (user) {
+        data.ownerDisplayName = user.displayName;
+      }
 
-  if (data.postTypeId !== 2) {
-    return;
-  }
-  data.parentId = node.attributes.ParentId;
-  if (!data.id || !data.parentId) {
-    console.warn('answer has blanks for answer: ', data);
-    return;
-  }
-  return addAnswer(siteSlug, data).catch((err) => {
-    console.error(`Could not add answer for question: ${data.parentId}: ${err}`);
+      if (data.postTypeId !== 2) {
+        return;
+      }
+      data.parentId = node.attributes.ParentId;
+      if (!data.id || !data.parentId) {
+        console.warn('answer has blanks for answer: ', data);
+        return;
+      }
+
+      // If this answer is for a question which is interesting to us
+      if (questionIdSet.has(data.parentId)) {
+        // To figure out which answer is best to keep, add them all to a piroirty queue and keep only the best one.
+        // If the answersMap doesn't have an association to a PQ yet, then set one up here.
+        if (!answersMap.has(data.parentId)) {
+          answersMap.set(data.parentId, new PriorityQueue((a, b) => {
+            if (acceptedAnswerIdSet.has(a.id)) {
+              return 1;
+            }
+            if (acceptedAnswerIdSet.has(b.id)) {
+              return -1;
+            }
+            return a.score - b.score;
+          }));
+        }
+        // Now add the answer to the appropriate PQ which we know exists from above
+        let answersPQ = answersMap.get(data.parentId);
+        answersPQ.enq(data);
+      }
+    }).then(() => {
+      // Now for each question, get the associated answers and figure out the
+      // best one to keep.
+      let promises = [];
+      questionIdSet.forEach(questionId => {
+        let answersPQ = answersMap.get(questionId);
+        if (answersPQ.size()) {
+          // Take only the best answer
+          let answer = answersPQ.deq();
+          if (answer.ownerUserId) {
+            userIdSet.add(answer.ownerUserId);
+          } else {
+            console.warn('null user specified for answer:', answer);
+          }
+          promises.push(addAnswer(siteSlug, answer).catch((err) => {
+            console.error(`Could not add answer for question: ${answer.parentId}: ${err}`);
+          }));
+        }
+      });
+      Promise.all(promises).then(resolve).catch(reject);
+    }).catch(err => console.error('parseAnswers error: ', err));
   });
-});
+};
 
 export let parseTags = parseFile.bind(null, 'Tags.xml', (node) => {
   let tag = {
@@ -201,10 +251,31 @@ export let parseTags = parseFile.bind(null, 'Tags.xml', (node) => {
   });
 });
 
+export let insertUsers = () => {
+  return new Promise((resolve, reject) => {
+    let promises = [];
+    let i = 0;
+    userIdSet.forEach((userId) => {
+      i++;
+      let user = allUsersMap.get(userId);
+      // Add in the page for per page querying
+      user.page = Math.ceil(i / usersPerPage);
+      promises.push(addUser(siteSlug, user).catch((err) => {
+          console.error(`Could not add user id: ${user.id}, err: ${err}`);
+      }));
+    });
+    Promise.all(promises).then(resolve).catch((err) => { reject(err); console.error('Promise.all insertUsers err is: ', err);});
+  });
+};
+
+
+
 /*
 parseUsers().then(parsePosts).then(parseTags).then(uninitDB).catch((err) => {
   console.error('err: ', err);
 });
 */
 
-parseUsers().then(parseQuestions).then(uninitDB);
+parseUsers().then(parseQuestions).then(parseAnswers).then(insertUsers).then(uninitDB).catch(err => {
+  console.error('top err: ', err);
+});
