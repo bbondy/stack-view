@@ -3,15 +3,14 @@ import User from './user.js';
 
 var Answer = React.createClass({
   render: function() {
-    return <div>
-      <hr/>
-      <div>Accepted: {this.props.isAccepted.toString()}</div>
-      <div>Score: {this.props.answer.score.toString()}</div>
+    return <div className='sectionContainer'>
+      <div dangerouslySetInnerHTML={{ __html: this.props.answer.body}}/>
       <User id={this.props.answer.ownerUserId}
         siteSlug={this.props.siteSlug}
         lang={this.props.lang}
         displayName={this.props.answer.ownerDisplayName}/>
-      <div dangerouslySetInnerHTML={{ __html: this.props.answer.body}}/>
+      <div>Score: {this.props.answer.score.toString()}</div>
+      <div>Accepted: {this.props.isAccepted.toString()}</div>
     </div>;
   }
 });

@@ -11,7 +11,7 @@ var Question = React.createClass({
 
 var QuestionsPage = React.createClass({
   render: function() {
-    return <div>
+    return <div className='sectionContainer'>
       <h1>Questions</h1>
       {
         this.props.questions.map(question => <Question key={question.id}

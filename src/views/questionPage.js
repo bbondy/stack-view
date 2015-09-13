@@ -3,16 +3,23 @@ var React = require('react');
 import Answer from './answer.js';
 import User from './user.js';
 
-var QuestionPage = React.createClass({
+var Question = React.createClass({
   render: function() {
-    return <div>
+    return <div className='sectionContainer'>
       <h1>{this.props.question.title}</h1>
-      <div>Score: {this.props.question.score.toString()}</div>
+      <p dangerouslySetInnerHTML={{ __html: this.props.question.body}}/>
       <User id={this.props.question.ownerUserId}
         siteSlug={this.props.siteSlug}
         lang={this.props.lang}
         displayName={this.props.question.ownerDisplayName}/>
-      <p dangerouslySetInnerHTML={{ __html: this.props.question.body}}/>
+      <div>Score: {this.props.question.score.toString()}</div>
+    </div>;
+  }
+});
+
+var Answers = React.createClass({
+  render: function() {
+    return <div>
       {
         this.props.answers.map((answer) => <Answer key={answer.id}
           siteSlug={this.props.siteSlug}
@@ -20,6 +27,20 @@ var QuestionPage = React.createClass({
           lang={this.props.lang}
           isAccepted={this.props.question.acceptedAnswerId === answer.id}/>)
       }
+    </div>;
+  }
+});
+
+var QuestionPage = React.createClass({
+  render: function() {
+    return <div>
+      <Question question={this.props.question}
+        siteSlug={this.props.siteSlug}
+        lang={this.props.lang}/>
+      <Answers answers={this.props.answers}
+        question={this.props.question}
+        siteSlug={this.props.siteSlug}
+        lang={this.props.lang}/>
     </div>;
   }
 });

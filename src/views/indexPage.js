@@ -12,7 +12,7 @@ var Site = React.createClass({
 
 var IndexPage = React.createClass({
   render: function() {
-    return <div>
+    return <div className='sectionContainer'>
       { sites.map(site =>
         <Site site={site}/>)
       }

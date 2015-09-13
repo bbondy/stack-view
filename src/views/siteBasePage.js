@@ -11,14 +11,14 @@ var SiteLink = React.createClass({
 
 var SitePerLangPage = React.createClass({
   render: function() {
-    return <div>
-    <h1>{this.props.title}</h1>
-    {
-      siteLangs(this.props.siteSlug).map(lang =>
-        <SiteLink key={lang}
+    return <div className='sectionContainer'>
+      <h1>{this.props.title}</h1>
+      {
+        siteLangs(this.props.siteSlug).map(lang =>
+          <SiteLink key={lang}
           lang={lang}
           siteSlug={this.props.siteSlug} />)
-    }
+      }
     </div>;
   }
 });

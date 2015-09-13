@@ -3,7 +3,7 @@ import User from './user.js';
 
 var UsersPage = React.createClass({
   render: function() {
-    return <div>
+    return <div className='sectionContainer'>
       <h1>Users</h1>
       {
         this.props.users.map(user => <User key={user.id}
