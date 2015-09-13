@@ -1,6 +1,6 @@
 let fs = require('fs');
 let PriorityQueue = require('priorityqueuejs');
-import {addUser, addQuestion, addAnswer, addTag, uninitDB} from './datastore.js';
+import {addUser, addQuestion, addAnswer, addTag, setStats, uninitDB} from './datastore.js';
 let strict = true;
 let allUsersMap = new Map();
 let questionIdSet = new Set();
@@ -11,6 +11,10 @@ let acceptedAnswerIdSet = new Set();
 // Maps a question ID to a prioirty queue of answers
 let answersMap = new Map();
 let siteSlug = 'programmers';
+
+let questionWordCount = 0;
+let answerWordCount = 0;
+let userWordCount = 0;
 
 let pq = new PriorityQueue((a, b) => b.viewCount - a.viewCount);
 
@@ -149,14 +153,14 @@ export let parseQuestions = () => {
         if (question.acceptedAnswerId) {
           acceptedAnswerIdSet.add(question.acceptedAnswerId);
         }
-        console.log('question tags: ', question.tags);
         if (question.tags) {
           // Split up tags like <tag1><tag2><tag3> into an array of strings iwth the tag names
           // Do this by replacing the starting < and the ending > with nothing, then split on the middle ><
           question.tags = question.tags.replace(/^</, '').replace(/>$/, '').split('><');
           question.tags.forEach(addTagFn);
         }
-        console.log('done tag');
+
+        questionWordCount += question.title.split(' ').length + question.body.split(' ').length;
 
         // Add in the page for per page querying
         question.page = Math.ceil(questionIdSet.size / questionsPerPage);
@@ -240,6 +244,7 @@ export let parseAnswers = () => {
           } else {
             console.warn('null user specified for answer:', answer);
           }
+          answerWordCount += answer.body.split(' ').length;
           promises.push(addAnswer(siteSlug, answer).catch((err) => {
             console.error(`Could not add answer for question: ${answer.parentId}: ${err}`);
           }));
@@ -287,6 +292,11 @@ export let insertUsers = () => {
       let user = allUsersMap.get(userId);
       // Add in the page for per page querying
       user.page = Math.ceil(i / usersPerPage);
+
+      if (user.aboutMe) {
+        userWordCount += user.aboutMe.split(' ').length;
+      }
+
       promises.push(addUser(siteSlug, user).catch((err) => {
           console.error(`Could not add user id: ${user.id}, err: ${err}`);
       }));
@@ -295,6 +305,19 @@ export let insertUsers = () => {
   });
 };
 
-parseUsers().then(parseQuestions).then(parseAnswers).then(insertUsers).then(parseTags).then(uninitDB).catch(err => {
+export let insertStats = () => {
+  let stats = {
+    userCount: userIdSet.size,
+    tagCount: tagMap.size,
+    questionCount: questionIdSet.size,
+    questionWordCount,
+    answerWordCount,
+    userWordCount,
+  };
+  console.log('Stats:', stats);
+  return setStats(siteSlug, stats);
+};
+
+parseUsers().then(parseQuestions).then(parseAnswers).then(insertUsers).then(parseTags).then(insertStats).then(uninitDB).catch(err => {
   console.error('top err: ', err);
 });

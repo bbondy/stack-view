@@ -11,7 +11,8 @@ sites.forEach(site => {
     questions: db.get('questions'),
     answers: db.get('answers'),
     users: db.get('users'),
-    tags: db.get('tags')
+    tags: db.get('tags'),
+    stats: db.get('stats'),
   };
 
   dbInfo.questions.index('id',{ unique: true });
@@ -91,6 +92,14 @@ function getStream(collection, filter, eachCB) {
  * Adds the specified question to the DB
  * Note that there is only 1 entry total, not 1 per language.
  */
+export function setStats(siteSlug, stats) {
+  return set(dbInfoMap.get(siteSlug).stats, {}, stats);
+}
+
+/**
+ * Adds the specified question to the DB
+ * Note that there is only 1 entry total, not 1 per language.
+ */
 export function addQuestion(siteSlug, question) {
   return set(dbInfoMap.get(siteSlug).questions, { id: question.id }, question);
 }
@@ -156,6 +165,14 @@ export function getTagsStream(siteSlug, lang, eachCB) {
  * Obtains the specified question from the DB.
  * Results will be localized in the specified language.
  */
+export function getStats(siteSlug) {
+  return getOne(dbInfoMap.get(siteSlug).stats, {});
+}
+
+/**
+ * Obtains the specified question from the DB.
+ * Results will be localized in the specified language.
+ */
 export function getQuestion(siteSlug, lang, questionId) {
   return new Promise((resolve, reject) => {
     getOne(dbInfoMap.get(siteSlug).questions, { id: questionId }).then(question => {
@@ -191,11 +208,6 @@ export function getUsers(siteSlug, lang, page) {
     }).catch(reject);
   });
 }
-
-
-
-
-
 
 /**
  * Obtains a list of answers for the specified questionId.
