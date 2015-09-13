@@ -5,6 +5,8 @@ let strict = true;
 let allUsersMap = new Map();
 let questionIdSet = new Set();
 let userIdSet = new Set();
+// Maps a tag name to a numberof instances it was encountered
+let tagMap = new Map();
 let acceptedAnswerIdSet = new Set();
 // Maps a question ID to a prioirty queue of answers
 let answersMap = new Map();
@@ -104,9 +106,12 @@ export let parseQuestions = () => {
         //answerCount: Number(node.attributes.AnswerCount),
         //commentCount: Number(node.attributes.CommentCount),
         //favoriteCount: Number(node.attributes.favoriteCount),
-        closedDate: new Date(node.attributes.ClosedDate),
         //communityOwnedDate: new Date(node.attributes.CommunityOwnedDate),
       };
+
+      if (node.attributes.ClosedDate) {
+        data.closedDate = new Date(node.attributes.ClosedDate);
+      }
 
       // Since the data dump doesn't always include it, set the display name here
       let user = allUsersMap.get(data.ownerUserId);
@@ -126,6 +131,13 @@ export let parseQuestions = () => {
       queueQuestion(data);
     }).then(() => {
       let promises = [];
+      let addTagFn = tagName => {
+        let tagCount = 0;
+        if (tagMap.has(tagName)) {
+          tagCount = tagMap.get(tagName);
+        }
+        tagMap.set(tagName, tagCount + 1);
+      };
       while (!pq.isEmpty()) {
         let question = pq.deq();
         questionIdSet.add(question.id);
@@ -137,6 +149,14 @@ export let parseQuestions = () => {
         if (question.acceptedAnswerId) {
           acceptedAnswerIdSet.add(question.acceptedAnswerId);
         }
+        console.log('question tags: ', question.tags);
+        if (question.tags) {
+          // Split up tags like <tag1><tag2><tag3> into an array of strings iwth the tag names
+          // Do this by replacing the starting < and the ending > with nothing, then split on the middle ><
+          question.tags = question.tags.replace(/^</, '').replace(/>$/, '').split('><');
+          question.tags.forEach(addTagFn);
+        }
+        console.log('done tag');
 
         // Add in the page for per page querying
         question.page = Math.ceil(questionIdSet.size / questionsPerPage);
@@ -169,7 +189,6 @@ export let parseAnswers = () => {
         //answerCount: Number(node.attributes.AnswerCount),
         //commentCount: Number(node.attributes.CommentCount),
         //favoriteCount: Number(node.attributes.favoriteCount),
-        closedDate: new Date(node.attributes.ClosedDate),
         //communityOwnedDate: new Date(node.attributes.CommunityOwnedDate),
       };
 
@@ -245,7 +264,15 @@ export let parseTags = parseFile.bind(null, 'Tags.xml', (node) => {
     return;
   }
 
+  if (!tagMap.has(tag.tagName)) {
+    return;
+  }
+
+  // Fix the tag count to only be what we know about
+  tag.count = tagMap.get(tag.tagName);
+
   // For whatever reason the other dumps reference tags by their tagName, so index that way
+  console.log('Adding tag for tag:', tag);
   return addTag(siteSlug, tag).catch((err) => {
     console.error(`Could not add tagName: ${tag.tagName}: ${err}`);
   });
@@ -268,14 +295,6 @@ export let insertUsers = () => {
   });
 };
 
-
-
-/*
-parseUsers().then(parsePosts).then(parseTags).then(uninitDB).catch((err) => {
-  console.error('err: ', err);
-});
-*/
-
-parseUsers().then(parseQuestions).then(parseAnswers).then(insertUsers).then(uninitDB).catch(err => {
+parseUsers().then(parseQuestions).then(parseAnswers).then(insertUsers).then(parseTags).then(uninitDB).catch(err => {
   console.error('top err: ', err);
 });
