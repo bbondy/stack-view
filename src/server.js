@@ -42,54 +42,69 @@ server.route( {
   }
 });
 
+let getQuestionsHandler = (request, reply) => {
+  getQuestions(request.params.siteSlug, request.params.lang, request.params.page || 1).then(questions => {
+    var context = {
+      title: 'Questions',
+      siteSlug: request.params.siteSlug,
+      lang: request.params.lang,
+      questions,
+    };
+    var renderOpts = { runtimeOptions: {} };
+    server.render('main', context, renderOpts, function (err, output) {
+      if (err) {
+        reply(err).code(500);
+        return;
+      }
+      reply(output).code(200);
+    });
+  }).catch((err) => {
+    console.log('questions error:', err);
+  });
+};
+
+let getUsersHandler = (request, reply) => {
+  getUsers(request.params.siteSlug, request.params.lang, request.params.page || 1).then(users => {
+    var context = {
+      title: 'Users',
+      siteSlug: request.params.siteSlug,
+      lang: request.params.lang,
+      users,
+    };
+    var renderOpts = { runtimeOptions: {} };
+    server.render('main', context, renderOpts, function (err, output) {
+      if (err) {
+        reply(err).code(500);
+        return;
+      }
+      reply(output).code(200);
+    });
+  }).catch((err) => {
+    console.log('users error:', err);
+  });
+};
+
 server.route({
   method: 'GET',
   path: '/{siteSlug}/{lang}/questions',
-  handler: function(request, reply) {
-    getQuestions(request.params.siteSlug, request.params.lang).then(questions => {
-      var context = {
-        title: 'Questions',
-        siteSlug: request.params.siteSlug,
-        lang: request.params.lang,
-        questions,
-      };
-      var renderOpts = { runtimeOptions: {} };
-      server.render('main', context, renderOpts, function (err, output) {
-        if (err) {
-          reply(err).code(500);
-          return;
-        }
-        reply(output).code(200);
-      });
-    }).catch((err) => {
-      console.log('questions error:', err);
-    });
-  }
+  handler: getQuestionsHandler,
+});
+server.route({
+  method: 'GET',
+  path: '/{siteSlug}/{lang}/questions/page/{page}',
+  handler: getQuestionsHandler,
 });
 
 server.route({
   method: 'GET',
   path: '/{siteSlug}/{lang}/users',
-  handler: function(request, reply) {
-    getUsers(request.params.siteSlug, request.params.lang, 1).then(users => {
-      var context = {
-        title: 'Users',
-        siteSlug: request.params.siteSlug,
-        lang: request.params.lang,
-        users,
-      };
-      var renderOpts = { runtimeOptions: {} };
-      server.render('main', context, renderOpts, function (err, output) {
-        if (err) {
-          reply(err).code(500);
-          return;
-        }
-        reply(output).code(200);
-      });
-    }).catch((err) => {
-      console.log('users error:', err);
-    });
-  }
+  handler: getUsersHandler,
+});
+
+server.route({
+  method: 'GET',
+  path: '/{siteSlug}/{lang}/users/page/{page}',
+  handler: getUsersHandler,
 });
 
 server.route({

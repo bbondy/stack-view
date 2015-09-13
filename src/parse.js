@@ -8,8 +8,9 @@ let siteSlug = 'programmers';
 
 let pq = new PriorityQueue((a, b) => b.viewCount - a.viewCount);
 
-const maxQuestions = 5;
+const maxQuestions = 20;
 const usersPerPage = 5;
+const questionsPerPage = 5;
 
 function queueQuestion(question) {
   pq.enq(question);
@@ -120,16 +121,20 @@ export let parseQuestions = () => {
         console.warn('question has blanks for question: ', data);
         return;
       }
+
       queueQuestion(data);
     }).then(() => {
       while (!pq.isEmpty()) {
         let question = pq.deq();
         let promises = [];
         questionIdSet.add(question.id);
+
+        // Add in the page for per page querying
+        question.page = Math.ceil(questionIdSet.size / questionsPerPage);
         promises.push(addQuestion(siteSlug, question));
-        console.log('adding question ID', question.id, 'with viewcount of: ', question.viewCount);
-        Promise.all(promises).then(resolve).catch(reject);
       }
+      // console.log('adding question ID', question.id, 'with viewcount of: ', question.viewCount);
+      Promise.all(promises).then(resolve).catch(reject);
     });
   });
 };
