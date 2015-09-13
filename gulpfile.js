@@ -171,7 +171,7 @@ gulp.task('watch', function() {
   gulp.watch([
     SRC_ROOT_PUBLIC_JS + '**/*',
   ], ['lint-js', 'bundle-js']);
-  gulp.watch([COPY_WEB_APP_FILES], ['copy-public-static-and-refresh']);
+  gulp.watch([COPY_WEB_APP_FILES], ['copy-public-static', 'less']);
 });
 
 
