@@ -4,5 +4,17 @@ export let sites = [{
   slug: 'programmers',
   seUrl: 'http://programmers.stackexchange.com/',
   langs: ['en', 'fr'],
-  db: 'localhost/stackview-db',
+  db: 'localhost/programmers',
+}, {
+  name: 'Coffee',
+  slug: 'coffee',
+  seUrl: 'http://coffee.stackexchange.com/',
+  langs: ['en', 'fr'],
+  db: 'localhost/coffee',
+}, {
+  name: 'ServerFault',
+  slug: 'serverfault',
+  seUrl: 'http://serverfault.com/',
+  langs: ['en', 'fr'],
+  db: 'localhost/serverfault',
 }];
