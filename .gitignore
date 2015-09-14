@@ -34,3 +34,6 @@ dist
 
 # Secrets file
 secrets.js
+
+# Data dumps location
+data

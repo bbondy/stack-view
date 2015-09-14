@@ -13,6 +13,10 @@ var babelify = require('babelify');
 var uglify = require('gulp-uglify');
 var source = require('vinyl-source-stream');
 var buffer = require('vinyl-buffer');
+var minimist = require('minimist');
+var shell = require('gulp-shell');
+var exec = require('child_process').exec;
+var es = require('event-stream');
 
 const SRC_ROOT = './src/';
 const SRC_ROOT_PUBLIC = './src/public/';
@@ -44,8 +48,21 @@ const DEFAULT_PORT = 20119;
 const DEFAULT_HOST = 'localhost';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
-gulp.task('start-server', function () {
+gulp.task('start-server', function() {
   server.listen( { path: './dist/server.js' } );
+});
+
+
+gulp.task('import', function(cb) {
+  var options = minimist(process.argv.slice(2));
+  var siteSlug = options.s;
+  if (!siteSlug) {
+    console.error('Usage: gulp import -s <siteSlug>');
+    return;
+  }
+  gulp.src('')
+    .pipe(shell('babel-node src/parse.js ' + siteSlug))
+    .pipe(es.wait(cb));
 });
 
 /**

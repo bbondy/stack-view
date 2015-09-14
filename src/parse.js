@@ -1,4 +1,5 @@
 let fs = require('fs');
+let path = require('path');
 let PriorityQueue = require('priorityqueuejs');
 import {addUser, addQuestion, addAnswer, addTag, setStats, uninitDB} from './datastore.js';
 let strict = true;
@@ -10,7 +11,6 @@ let tagMap = new Map();
 let acceptedAnswerIdSet = new Set();
 // Maps a question ID to a prioirty queue of answers
 let answersMap = new Map();
-let siteSlug = 'programmers';
 
 let questionWordCount = 0;
 let answerWordCount = 0;
@@ -23,6 +23,11 @@ let pq = new PriorityQueue((a, b) => scoreQuestion(b) - scoreQuestion(a));
 const maxQuestions = 20;
 const usersPerPage = 5;
 const questionsPerPage = 5;
+
+const siteSlug = process.argv[2];
+const usersXml = path.join('./data', siteSlug, 'Users.xml');
+const postsXml = path.join('./data', siteSlug, 'Posts.xml');
+const tagsXml = path.join('./data', siteSlug, 'Tags.xml');
 
 function queueQuestion(question) {
   pq.enq(question);
@@ -66,7 +71,7 @@ let parseFile = (filePath, onOpenTag) => {
   });
 };
 
-export let parseUsers = parseFile.bind(null, 'Users.xml', (node) => {
+export let parseUsers = parseFile.bind(null, usersXml, (node) => {
   let user = {
     id: node.attributes.Id,
     //reputation: Number(node.attributes.Reputation),
@@ -93,7 +98,7 @@ export let parseUsers = parseFile.bind(null, 'Users.xml', (node) => {
 
 export let parseQuestions = () => {
   return new Promise((resolve, reject) => {
-    parseFile('Posts.xml', (node) => {
+    parseFile(postsXml, (node) => {
       let data = {
         id: node.attributes.Id,
         postTypeId: Number(node.attributes.PostTypeId),
@@ -179,7 +184,7 @@ export let parseQuestions = () => {
 
 export let parseAnswers = () => {
   return new Promise((resolve, reject) => {
-    parseFile('Posts.xml', (node) => {
+    parseFile(postsXml, (node) => {
       let data = {
         id: node.attributes.Id,
         postTypeId: Number(node.attributes.PostTypeId),
@@ -260,7 +265,7 @@ export let parseAnswers = () => {
   });
 };
 
-export let parseTags = parseFile.bind(null, 'Tags.xml', (node) => {
+export let parseTags = parseFile.bind(null, tagsXml, (node) => {
   let tag = {
     id: node.attributes.Id,
     tagName: node.attributes.TagName,
