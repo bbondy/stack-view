@@ -246,7 +246,7 @@ export let parseAnswers = () => {
       let promises = [];
       questionIdSet.forEach(questionId => {
         let answersPQ = answersMap.get(questionId);
-        if (answersPQ.size()) {
+        if (answersPQ && answersPQ.size()) {
           // Take only the best answer
           let answer = answersPQ.deq();
           if (answer.ownerUserId) {
