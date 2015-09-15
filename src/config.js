@@ -12,9 +12,15 @@ export let sites = [{
   langs: ['en', 'fr'],
   db: 'localhost/coffee',
 }, {
-  name: 'ServerFault',
+  name: 'Server Fault',
   slug: 'serverfault',
   seUrl: 'http://serverfault.com/',
   langs: ['en', 'fr'],
   db: 'localhost/serverfault',
+}, {
+  name: 'Super User',
+  slug: 'superuser',
+  seUrl: 'http://superuser.com/',
+  langs: ['en', 'fr'],
+  db: 'localhost/superuser',
 }];

@@ -4,8 +4,8 @@ import {sites} from './config.js';
 
 let dbInfoMap = new Map();
 
-sites.forEach(site => {
-  let db = monk(site.db);
+let newDB = (site, temp) => {
+  let db = monk(site.db + (temp? '-temp' : ''));
   let dbInfo = {
     db,
     questions: db.get('questions'),
@@ -21,7 +21,12 @@ sites.forEach(site => {
   dbInfo.users.index('id', { unique: true });
   dbInfo.users.index('page');
   dbInfo.tags.index({ 'tagName': 1 }, { unique: true });
-  dbInfoMap.set(site.slug, dbInfo);
+  return dbInfo;
+};
+
+sites.forEach(site => {
+    dbInfoMap.set(site.slug, newDB(site));
+    dbInfoMap.set(`${site.slug}-temp`, newDB(site, true));
 });
 
 function set(collection, query, obj) {
