@@ -106,24 +106,24 @@ server.route({
 server.route({
   method: 'GET',
   path: '/{siteSlug}/{lang}/questions',
-  handler: getQuestionsHandler.bind(this),
+  handler: getQuestionsHandler,
 });
 server.route({
   method: 'GET',
   path: '/{siteSlug}/{lang}/questions/page/{page}',
-  handler: getQuestionsHandler.bind(this),
+  handler: getQuestionsHandler,
 });
 
 server.route({
   method: 'GET',
   path: '/{siteSlug}/{lang}/users',
-  handler: getUsersHandler.bind(this),
+  handler: getUsersHandler,
 });
 
 server.route({
   method: 'GET',
   path: '/{siteSlug}/{lang}/users/page/{page}',
-  handler: getUsersHandler.bind(this),
+  handler: getUsersHandler,
 });
 
 server.route({
