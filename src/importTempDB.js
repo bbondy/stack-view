@@ -1,12 +1,19 @@
 let fs = require('fs');
 let path = require('path');
-import {addUser, addQuestion, addAnswer, addTag, uninitDB} from './datastore.js';
+let PriorityQueue = require('priorityqueuejs');
+import {addUser, addQuestion, addAnswer, addTag, getQuestionsStream, getAnswers, uninitDB} from './datastore.js';
 let strict = true;
 
 const siteSlug = process.argv[2];
+const siteSlugTemp = siteSlug  + '-temp';
+const baseLang = 'en';
 const usersXml = path.join('./data', siteSlug, 'Users.xml');
 const postsXml = path.join('./data', siteSlug, 'Posts.xml');
 const tagsXml = path.join('./data', siteSlug, 'Tags.xml');
+
+const maxQuestions = 20;
+
+let pq = new PriorityQueue((a, b) => b.weight - a.weight);
 
 let parseFile = (filePath, onOpenTag) => {
   return new Promise((resolve, reject) => {
@@ -67,7 +74,7 @@ export let parseUsers = parseFile.bind(null, usersXml, (node) => {
   }
 
   console.log('add user:', user);
-  return addUser(siteSlug, user).catch((err) => {
+  return addUser(siteSlugTemp, user).catch((err) => {
     console.error(`Could not add user id: ${user.id}, err: ${err}`);
   });
 });
@@ -104,7 +111,7 @@ export let parseQuestions = parseFile.bind(null, postsXml, (node) => {
       console.warn('question has blanks for question: ', data);
       return;
     }
-    return addQuestion(siteSlug, data).catch((err) => {
+    return addQuestion(siteSlugTemp, data).catch((err) => {
       console.error(`Could not add question: ${data.id}: ${err}`);
     });
   } else if (data.postTypeId === 2) {
@@ -113,7 +120,7 @@ export let parseQuestions = parseFile.bind(null, postsXml, (node) => {
       console.warn('answer has blanks for answer: ', data);
       return;
     }
-    return addAnswer(siteSlug, data).catch((err) => {
+    return addAnswer(siteSlugTemp, data).catch((err) => {
       console.error(`Could not add answer for question: ${data.parentId}: ${err}`);
     });
   }
@@ -135,11 +142,52 @@ export let parseTags = parseFile.bind(null, tagsXml, (node) => {
 
   // For whatever reason the other dumps reference tags by their tagName, so index that way
   console.log('Adding tag for tag:', tag);
-  return addTag(siteSlug, tag).catch((err) => {
+  return addTag(siteSlugTemp, tag).catch((err) => {
     console.error(`Could not add tagName: ${tag.tagName}: ${err}`);
   });
 });
 
-parseUsers().then(parseQuestions).then(parseTags).then(uninitDB).catch(err => {
+function queueQuestion(question) {
+  pq.enq(question);
+  if (pq.size() > maxQuestions) {
+    pq.deq();
+  }
+}
+
+export let selectBestAnswersAndWeigh = () => {
+  return new Promise((resolve, reject) => {
+    let promises = [];
+    promises.push(getQuestionsStream(siteSlugTemp, baseLang, question => {
+      promises.push(getAnswers(siteSlugTemp, baseLang, question.id).then(answers => {
+        // Create a PQ for weighing all the answers to find the best one
+        let answersPQ = new PriorityQueue((a, b) => {
+          if (question.acceptedAnswerId === a.id) {
+            return 1;
+          }
+          if (question.acceptedAnswerId === b.id) {
+            return -1;
+          }
+          return a.score - b.score;
+        });
+
+        let wordCount = question.title.split(' ').length + question.body.split(' ').length;
+
+        // Now add all answers to a PQ to get the best one
+        answers.forEach(answer => answersPQ.enq(answer));
+        if (answers.length > 0) {
+          let bestAnswer = answersPQ.deq();
+          wordCount += bestAnswer.body.split(' ').length;
+          question.bestAnswerId = bestAnswer.id;
+        }
+        question.weight = question.ViewCount * 0.01 * 0.25 - wordCount * 0.12;
+        queueQuestion(question);
+      }));
+    }));
+    Promise.all(promises).then(resolve).catch(reject);
+  });
+};
+
+parseUsers().then(parseQuestions).then(parseTags).then(selectBestAnswersAndWeigh).then(uninitDB).catch(err => {
+  console.log('pq size is: ', pq.size());
   console.error('top err: ', err);
 });
