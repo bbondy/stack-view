@@ -1,7 +1,7 @@
 let fs = require('fs');
 let path = require('path');
 let PriorityQueue = require('priorityqueuejs');
-import {addUser, addQuestion, addAnswer, addTag, getQuestionsStream, getAnswers, uninitDB} from './datastore.js';
+import {addUser, addQuestion, addAnswer, addTag, getQuestionsStream, getAnswers, setStats, uninitDB} from './datastore.js';
 let strict = true;
 
 const siteSlug = process.argv[2];
@@ -12,6 +12,18 @@ const postsXml = path.join('./data', siteSlug, 'Posts.xml');
 const tagsXml = path.join('./data', siteSlug, 'Tags.xml');
 
 const maxQuestions = 20;
+const usersPerPage = 5;
+const questionsPerPage = 5;
+
+let tagMap = new Map();
+let bestAnswerIdSet = new Set();
+let userIdSet = new Set();
+let questionIdSet = new Set();
+
+let questionWordCount = 0;
+let answerWordCount = 0;
+let userWordCount = 0;
+let questionViews = 0;
 
 let pq = new PriorityQueue((a, b) => b.weight - a.weight);
 
@@ -187,7 +199,87 @@ export let selectBestAnswersAndWeigh = () => {
   });
 };
 
-parseUsers().then(parseQuestions).then(parseTags).then(selectBestAnswersAndWeigh).then(uninitDB).catch(err => {
+export let insertBestQuestions = () => {
+  return new Promise((resolve, reject) => {
+    let promises = [];
+    let addTagFn = tagName => {
+      let tagCount = 0;
+      if (tagMap.has(tagName)) {
+        tagCount = tagMap.get(tagName);
+      }
+      tagMap.set(tagName, tagCount + 1);
+    };
+
+    while (!pq.isEmpty()) {
+      let question = pq.deq();
+      questionIdSet.add(question.id);
+      if (question.ownerUserId) {
+        userIdSet.add(question.ownerUserId);
+      } else {
+        console.warn('null user specified for question:', question);
+      }
+      if (question.acceptedAnswerId) {
+        bestAnswerIdSet.add(question.bestAnswerId);
+      }
+      if (question.tags) {
+        // Split up tags like <tag1><tag2><tag3> into an array of strings iwth the tag names
+        // Do this by replacing the starting < and the ending > with nothing, then split on the middle ><
+        question.tags = question.tags.replace(/^</, '').replace(/>$/, '').split('><');
+        question.tags.forEach(addTagFn);
+      }
+
+      questionWordCount += question.title.split(' ').length + question.body.split(' ').length;
+      if (question.viewCount) {
+        questionViews += question.viewCount;
+      }
+
+      // Add in the page for per page querying
+      question.page = Math.ceil(questionIdSet.size / questionsPerPage);
+      promises.push(addQuestion(siteSlug, question));
+    }
+    console.log('waiting for all questions to insert');
+    Promise.all(promises).then(resolve).catch(reject);
+  });
+};
+
+export let insertAnswers = () => {
+  // TODO
+};
+
+export let insertUsers = () => {
+  // TODO
+};
+
+export let insertTags = () => {
+  // TODO
+};
+
+export let insertStats = () => {
+  let stats = {
+    userCount: userIdSet.size,
+    tagCount: tagMap.size,
+    questionCount: questionIdSet.size,
+    questionWordCount,
+    answerWordCount,
+    userWordCount,
+    questionViews,
+  };
+  console.log('Stats:', stats);
+  return setStats(siteSlug, stats);
+};
+
+parseUsers()
+  .then(parseQuestions)
+  .then(parseTags)
+  .then(selectBestAnswersAndWeigh)
+  .then(insertBestQuestions)
+  .then(insertAnswers)
+  .then(insertUsers)
+  .then(insertTags)
+  .then(insertStats)
+  .then(uninitDB)
+  .then(() => {
   console.log('pq size is: ', pq.size());
+}).catch(err => {
   console.error('top err: ', err);
 });
