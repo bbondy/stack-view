@@ -17,10 +17,14 @@ let newDB = (site, temp) => {
 
   dbInfo.questions.index('id',{ unique: true });
   dbInfo.questions.index('page');
+  dbInfo.questions.index('ownerUserId');
+  dbInfo.answers.index('id', { unique: true});
   dbInfo.answers.index('id parentId', { unique: true });
+  dbInfo.answers.index('ownerUserId');
   dbInfo.users.index('id', { unique: true });
   dbInfo.users.index('page');
   dbInfo.tags.index({ 'tagName': 1 }, { unique: true });
+
   return dbInfo;
 };
 
@@ -137,12 +141,24 @@ export function addTag(siteSlug, tag) {
  * Obtains all questions from the DB calling eachCB for each, and resolves once done
  * Results will be localized in the specified language.
  */
-export function getQuestionsStream(siteSlug, lang, eachCB) {
-  return getStream(dbInfoMap.get(siteSlug).questions, {}, (question) => {
+export function getQuestionsStream(siteSlug, lang, filter, eachCB) {
+  return getStream(dbInfoMap.get(siteSlug).questions, filter, (question) => {
     // TODO: Normalize question to specified format
     eachCB(question);
   });
 }
+
+/**
+ * Obtains all answers from the DB calling eachCB for each, and resolves once done
+ * Results will be localized in the specified language.
+ */
+export function getAnswersStream(siteSlug, lang, filter, eachCB) {
+  return getStream(dbInfoMap.get(siteSlug).answers, filter, (question) => {
+    // TODO: Normalize question to specified format
+    eachCB(question);
+  });
+}
+
 
 /**
  * Obtains all users from the DB calling eachCB for each, and resolves once done
@@ -215,6 +231,19 @@ export function getUsers(siteSlug, lang, page) {
 }
 
 /**
+ * Obtains a single answer by the answerId.
+ * Results will be localized in the specified language.
+ */
+export function getAnswer(siteSlug, lang, answerId) {
+  return new Promise((resolve, reject) => {
+    getOne(dbInfoMap.get(siteSlug).answers, { id: answerId }).then(answer => {
+      // TODO: normalize answers to localized format
+      resolve(answer);
+    }).catch(reject);
+  });
+}
+
+/**
  * Obtains a list of answers for the specified questionId.
  * Results will be localized in the specified language.
  */
@@ -246,6 +275,15 @@ export function getTags(siteSlug, lang) {
     get(dbInfoMap.get(siteSlug).tags, {} ,{sort: { tagName: 1 }}).then(tags => {
       // TODO: normalize tags to localized format
       resolve(tags);
+    }).catch(reject);
+  });
+}
+
+export function getTag(siteSlug, lang, tagName) {
+  return new Promise((resolve, reject) => {
+    getOne(dbInfoMap.get(siteSlug).tags, { tagName }).then(tag => {
+      // TODO: normalize tags to localized format
+      resolve(tag);
     }).catch(reject);
   });
 }

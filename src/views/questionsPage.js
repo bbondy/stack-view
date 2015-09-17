@@ -4,7 +4,7 @@ import {questionUrl} from '../siteUtil.js';
 var Question = React.createClass({
   render: function() {
     return <div>
-      <a href={questionUrl(this.props.siteSlug, this.props.lang, this.props.question.id)}>{this.props.question.title}</a>
+      <a href={questionUrl(this.props.siteSlug, this.props.lang, this.props.question.id)}>{this.props.question.title} (Weight: {this.props.question.weight})</a>
     </div>;
   }
 });

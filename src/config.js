@@ -23,4 +23,22 @@ export let sites = [{
   seUrl: 'http://superuser.com/',
   langs: ['en', 'fr'],
   db: 'localhost/superuser',
+}, {
+  name: 'Stack Overflow',
+  slug: 'stackoverflow',
+  seUrl: 'http://stackoverflow.com/',
+  langs: ['en', 'fr'],
+  db: 'localhost/programmers',
+}, {
+  name: 'Android',
+  slug: 'android',
+  seUrl: 'http://android.stackexchange.com/',
+  langs: ['en', 'fr'],
+  db: 'localhost/android',
+}, {
+  name: 'Tor',
+  slug: 'tor',
+  seUrl: 'http://tor.stackexchange.com/',
+  langs: ['en', 'fr'],
+  db: 'localhost/tor',
 }];

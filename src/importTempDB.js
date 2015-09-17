@@ -1,7 +1,7 @@
 let fs = require('fs');
 let path = require('path');
 let PriorityQueue = require('priorityqueuejs');
-import {addUser, addQuestion, addAnswer, addTag, getQuestionsStream, getAnswers, setStats, uninitDB} from './datastore.js';
+import {addUser, addQuestion, addAnswer, getTag, addTag, getUser, getAnswersStream, getQuestionsStream, getAnswer, getAnswers, setStats, uninitDB} from './datastore.js';
 let strict = true;
 
 const siteSlug = process.argv[2];
@@ -20,10 +20,22 @@ let bestAnswerIdSet = new Set();
 let userIdSet = new Set();
 let questionIdSet = new Set();
 
-let questionWordCount = 0;
-let answerWordCount = 0;
-let userWordCount = 0;
-let questionViews = 0;
+
+class Stats {
+  constructor() {
+    this.userCount = 0;
+    this.tagCount = 0;
+    this.questionCount = 0;
+    this.answerCount = 0;
+    this.questionWordCount = 0;
+    this.answerWordCount = 0;
+    this.userWordCount = 0;
+    this.totalWeight = 0;
+    this.questionViews = 0;
+  }
+}
+let dbStats = new Stats();
+let dbStatsTemp = new Stats();
 
 let pq = new PriorityQueue((a, b) => b.weight - a.weight);
 
@@ -31,7 +43,7 @@ let parseFile = (filePath, onOpenTag) => {
   return new Promise((resolve, reject) => {
     var saxStream = require('sax').createStream(strict, {});
     let promises = [];
-    saxStream.on('error', (e) => {
+    saxStream.on('error', e => {
       // unhandled errors will throw, since this is a proper node
       // event emitter.
       console.error('error!', e);
@@ -54,9 +66,10 @@ let parseFile = (filePath, onOpenTag) => {
     saxStream.on('end', () => {
       // parser stream is done, and ready to have more stuff written to it.
       console.log('waiting for all promises for file:', filePath);
-      Promise.all(promises).then(resolve).catch((err) => console.error('Promise.all err is: ', err));
+      Promise.all(promises).then(resolve).catch(reject);
     });
 
+    console.log('parsing file: ', filePath);
     fs.createReadStream(filePath)
       .pipe(saxStream);
   });
@@ -64,7 +77,7 @@ let parseFile = (filePath, onOpenTag) => {
 
 export let parseUsers = parseFile.bind(null, usersXml, (node) => {
   let user = {
-    id: node.attributes.Id,
+    id: Number(node.attributes.Id),
     //reputation: Number(node.attributes.Reputation),
     //creationdate: new Date(node.attributes.CreationDate),
     displayName: node.attributes.DisplayName,
@@ -80,12 +93,7 @@ export let parseUsers = parseFile.bind(null, usersXml, (node) => {
     profileImageUrl: node.attributes.ProfileImageUrl,
     age: node.attributes.age,
   };
-  if (!user.id) {
-    console.warn('user has blanks for user: ', user);
-    return Promise.resolve();
-  }
-
-  console.log('add user:', user);
+  dbStatsTemp.userCount++;
   return addUser(siteSlugTemp, user).catch((err) => {
     console.error(`Could not add user id: ${user.id}, err: ${err}`);
   });
@@ -93,13 +101,13 @@ export let parseUsers = parseFile.bind(null, usersXml, (node) => {
 
 export let parseQuestions = parseFile.bind(null, postsXml, (node) => {
   let data = {
-    id: node.attributes.Id,
+    id: Number(node.attributes.Id),
     postTypeId: Number(node.attributes.PostTypeId),
     //creationDate: new Date(node.attributes.CreationDate),
     score: Number(node.attributes.Score),
     viewCount: Number(node.attributes.ViewCount),
     body: node.attributes.Body,
-    ownerUserId: node.attributes.OwnerUserId,
+    ownerUserId: Number(node.attributes.OwnerUserId),
     // Data dump doesn't always include this field!
     // ownerDisplayName: node.attributes.OwnerDisplayName,
     //lastEditorUserId: node.attributes.LastEditorUserId,
@@ -118,31 +126,23 @@ export let parseQuestions = parseFile.bind(null, postsXml, (node) => {
   }
 
   if (data.postTypeId === 1) {
-    data.acceptedAnswerId = node.attributes.AcceptedAnswerId;
-    if (!data.id) {
-      console.warn('question has blanks for question: ', data);
-      return;
-    }
-    return addQuestion(siteSlugTemp, data).catch((err) => {
-      console.error(`Could not add question: ${data.id}: ${err}`);
-    });
+    data.acceptedAnswerId = Number(node.attributes.AcceptedAnswerId);
+    dbStatsTemp.questionCount++;
+    data.page = Math.ceil(dbStatsTemp.questionCount / questionsPerPage);
+    return addQuestion(siteSlugTemp, data);
   } else if (data.postTypeId === 2) {
-    data.parentId = node.attributes.ParentId;
-    if (!data.id || !data.parentId) {
-      console.warn('answer has blanks for answer: ', data);
-      return;
-    }
-    return addAnswer(siteSlugTemp, data).catch((err) => {
-      console.error(`Could not add answer for question: ${data.parentId}: ${err}`);
-    });
+    data.parentId = Number(node.attributes.ParentId);
+    dbStatsTemp.answerCount++;
+    data.page = Math.ceil(dbStatsTemp.answerCount / questionsPerPage);
+    return addAnswer(siteSlugTemp, data);
   }
 });
 
 export let parseTags = parseFile.bind(null, tagsXml, (node) => {
   let tag = {
-    id: node.attributes.Id,
+    id: Number(node.attributes.Id),
     tagName: node.attributes.TagName,
-    count: node.attributes.Count,
+    count: Number(node.attributes.Count),
     excerptPostId: node.attributes.ExcerptPostId,
     wikiPostId: node.attributes.WikiPostId,
   };
@@ -153,7 +153,7 @@ export let parseTags = parseFile.bind(null, tagsXml, (node) => {
   }
 
   // For whatever reason the other dumps reference tags by their tagName, so index that way
-  console.log('Adding tag for tag:', tag);
+  dbStatsTemp.tagCount++;
   return addTag(siteSlugTemp, tag).catch((err) => {
     console.error(`Could not add tagName: ${tag.tagName}: ${err}`);
   });
@@ -168,39 +168,70 @@ function queueQuestion(question) {
 
 export let selectBestAnswersAndWeigh = () => {
   return new Promise((resolve, reject) => {
-    let promises = [];
-    promises.push(getQuestionsStream(siteSlugTemp, baseLang, question => {
-      promises.push(getAnswers(siteSlugTemp, baseLang, question.id).then(answers => {
-        // Create a PQ for weighing all the answers to find the best one
-        let answersPQ = new PriorityQueue((a, b) => {
-          if (question.acceptedAnswerId === a.id) {
-            return 1;
-          }
-          if (question.acceptedAnswerId === b.id) {
-            return -1;
-          }
-          return a.score - b.score;
-        });
+    console.log('Selecting best answers and calculating weight');
+    let getQuestionsStreamPromises = [];
+    let getAnswersPromises = [];
+    let handleQuestionAndAnswer = (question, bestAnswer) => {
+      if (!bestAnswer) {
+        return;
+      }
+      let wordCount = question.title.split(' ').length + question.body.split(' ').length + bestAnswer.body.split(' ').length;
+      question.bestAnswerId = bestAnswer.id;
+      // Includes the weight of both the best answer and question together
+      question.weight = question.viewCount * 0.01 * 0.25 - wordCount * 0.12;
+      queueQuestion(question);
+    };
 
-        let wordCount = question.title.split(' ').length + question.body.split(' ').length;
+    let handleGetQuestions = question => {
+      let addBestAnswer = () => getAnswersPromises.push(getAnswers(siteSlugTemp, baseLang, question.id).then(answers => {
+          // Create a PQ for weighing all the answers to find the best one
+          let answersPQ = new PriorityQueue((a, b) => {
+            if (question.acceptedAnswerId === a.id) {
+              return 1;
+            }
+            if (question.acceptedAnswerId === b.id) {
+              return -1;
+            }
+            return a.score - b.score;
+          });
 
-        // Now add all answers to a PQ to get the best one
-        answers.forEach(answer => answersPQ.enq(answer));
-        if (answers.length > 0) {
-          let bestAnswer = answersPQ.deq();
-          wordCount += bestAnswer.body.split(' ').length;
-          question.bestAnswerId = bestAnswer.id;
-        }
-        question.weight = question.ViewCount * 0.01 * 0.25 - wordCount * 0.12;
-        queueQuestion(question);
+          // Now add all answers to a PQ to get the best one
+          answers.forEach(answer => answersPQ.enq(answer));
+
+          // Don't even consider things without answers
+          if (answers.length > 0) {
+            let bestAnswer = answersPQ.deq();
+            handleQuestionAndAnswer(question, bestAnswer);
+          }
       }));
-    }));
-    Promise.all(promises).then(resolve).catch(reject);
+      if (!question.acceptedAnswerId) {
+        addBestAnswer();
+      } else {
+        getAnswersPromises.push(getAnswer(siteSlugTemp, baseLang, question.acceptedAnswerId).then(bestAnswer => {
+          if (bestAnswer) {
+            handleQuestionAndAnswer(question, bestAnswer);
+          } else {
+            console.warn('Best answer for question not found. Question:', question, '. Retrying to add best answer instead.');
+            addBestAnswer();
+          }
+        }));
+      }
+    };
+
+    let tempPages = Math.ceil(dbStatsTemp.questionCount / questionsPerPage);
+    for (let i = 0; i < tempPages; i++) {
+      getQuestionsStreamPromises.push(getQuestionsStream(siteSlugTemp, baseLang, { page: i }, handleGetQuestions));
+    }
+    console.log('Waiting for best answers and weight promises');
+    Promise.all(getQuestionsStreamPromises).then(() => {
+      return Promise.all(getAnswersPromises);
+    }).then(resolve).catch(reject);
   });
 };
 
 export let insertBestQuestions = () => {
   return new Promise((resolve, reject) => {
+    console.log('Inserting best questions');
     let promises = [];
     let addTagFn = tagName => {
       let tagCount = 0;
@@ -210,15 +241,15 @@ export let insertBestQuestions = () => {
       tagMap.set(tagName, tagCount + 1);
     };
 
+    console.log('PQ size is: ', pq.size());
     while (!pq.isEmpty()) {
       let question = pq.deq();
       questionIdSet.add(question.id);
+      // ownerUserId won't be set for community wiki
       if (question.ownerUserId) {
         userIdSet.add(question.ownerUserId);
-      } else {
-        console.warn('null user specified for question:', question);
       }
-      if (question.acceptedAnswerId) {
+      if (question.bestAnswerId) {
         bestAnswerIdSet.add(question.bestAnswerId);
       }
       if (question.tags) {
@@ -228,44 +259,114 @@ export let insertBestQuestions = () => {
         question.tags.forEach(addTagFn);
       }
 
-      questionWordCount += question.title.split(' ').length + question.body.split(' ').length;
+      dbStats.questionWordCount += question.title.split(' ').length + question.body.split(' ').length;
       if (question.viewCount) {
-        questionViews += question.viewCount;
+        dbStats.questionViews += question.viewCount;
       }
+      dbStats.totalWeight += question.weight;
 
       // Add in the page for per page querying
       question.page = Math.ceil(questionIdSet.size / questionsPerPage);
+
       promises.push(addQuestion(siteSlug, question));
     }
-    console.log('waiting for all questions to insert');
+    console.log('waiting for all questions to insert: ', promises.length);
     Promise.all(promises).then(resolve).catch(reject);
   });
 };
 
-export let insertAnswers = () => {
-  // TODO
+export let insertBestAnswers = () => {
+  return new Promise((resolve, reject) => {
+    console.log('Inserting answers');
+    let getAnswerPromises = [];
+    let addAnswerPromises = [];
+    bestAnswerIdSet.forEach(answerId => {
+      getAnswerPromises.push(getAnswer(siteSlugTemp, baseLang, answerId).then(answer => {
+        dbStats.answerWordCount += answer.body.split(' ').length;
+        if (answer.ownerUserId) {
+          userIdSet.add(answer.ownerUserId);
+        }
+        addAnswerPromises.push(addAnswer(siteSlug, answer));
+      }));
+    });
+    Promise.all(getAnswerPromises).then(() => {
+      return Promise.all(addAnswerPromises);
+    }).then(resolve).catch(reject);
+  });
 };
 
 export let insertUsers = () => {
-  // TODO
+  return new Promise((resolve, reject) => {
+    console.log('Inserting users');
+    let getUsersPromises = [];
+    let addUsersPromises = [];
+    let addPostPromises = [];
+    let getPostPromises = [];
+    let i = 0;
+    userIdSet.forEach(userId => {
+      getUsersPromises.push(getUser(siteSlugTemp, baseLang, userId).then(user => {
+        if (user.aboutMe) {
+          dbStats.userWordCount += user.aboutMe.split(' ').length;
+        }
+
+        // Add in the page for per page querying
+        user.page = Math.ceil(++i / usersPerPage);
+
+        // Update all of the questions with the user info
+        getPostPromises.push(getQuestionsStream(siteSlug, baseLang, { ownerUserId: user.id }, question => {
+          question.ownerDisplayName = user.displayName;
+          addPostPromises.push(addQuestion(siteSlug, question));
+        }));
+
+        // Update all of the answers with the user info
+        getPostPromises.push(getAnswersStream(siteSlug, baseLang, { ownerUserId: user.id }, answer => {
+          answer.ownerDisplayName = user.displayName;
+          addPostPromises.push(addAnswer(siteSlug, answer));
+        }));
+
+
+        addUsersPromises.push(addUser(siteSlug, user));
+      }));
+    });
+    console.log('Waiting for users to insert');
+    Promise.all(getUsersPromises).then(() => {
+      console.log('Waiting for add users promises');
+      return Promise.all(addUsersPromises);
+    }).then(() => {
+      console.log('Waiting for questions promises');
+      return Promise.all(getPostPromises);
+    }).then(() => {
+      console.log('Waiting for update questions promises');
+      return Promise.all(addPostPromises);
+    }).then(resolve).catch(reject);
+  });
 };
 
 export let insertTags = () => {
-  // TODO
+  return new Promise((resolve, reject) => {
+    console.log('Inserting tags');
+    let getTagPromises = [];
+    let addTagPromises = [];
+    tagMap.forEach((tagCount, tagName) => {
+      getTagPromises.push(getTag(siteSlugTemp, baseLang, tagName).then(tag => {
+        tag.count = tagCount;
+        addTagPromises.push(addTag(siteSlug, tag));
+      }));
+    });
+    console.log('Waiting for tags to insert');
+    Promise.all(getTagPromises).then(() => {
+      return Promise.all(addTagPromises);
+    }).then(resolve).catch(reject);
+  });
 };
 
 export let insertStats = () => {
-  let stats = {
-    userCount: userIdSet.size,
-    tagCount: tagMap.size,
-    questionCount: questionIdSet.size,
-    questionWordCount,
-    answerWordCount,
-    userWordCount,
-    questionViews,
-  };
-  console.log('Stats:', stats);
-  return setStats(siteSlug, stats);
+  dbStats.userCount = userIdSet.size;
+  dbStats.tagCount = tagMap.size;
+  dbStats.questionCount = questionIdSet.size;
+  dbStats.answerCount = bestAnswerIdSet.size;
+  console.log('Stats:', dbStats);
+  return setStats(siteSlug, dbStats);
 };
 
 parseUsers()
@@ -273,8 +374,8 @@ parseUsers()
   .then(parseTags)
   .then(selectBestAnswersAndWeigh)
   .then(insertBestQuestions)
-  .then(insertAnswers)
-  .then(insertUsers)
+  .then(insertBestAnswers)
+  .then(insertUsers) // TODO insert proper name in the questions as well
   .then(insertTags)
   .then(insertStats)
   .then(uninitDB)
@@ -282,4 +383,7 @@ parseUsers()
   console.log('pq size is: ', pq.size());
 }).catch(err => {
   console.error('top err: ', err);
+  if (err.stack) {
+    console.error('err.stack: ', err.stack);
+  }
 });

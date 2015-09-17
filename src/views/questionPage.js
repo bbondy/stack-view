@@ -14,6 +14,8 @@ var Question = React.createClass({
         lang={this.props.lang}
         displayName={this.props.question.ownerDisplayName}/>
       <div>Score: {this.props.question.score.toString()}</div>
+      <div>Weight: {this.props.question.weight.toString()}</div>
+      <div>Views: {this.props.question.viewCount.toString()}</div>
     </div>;
   }
 });
