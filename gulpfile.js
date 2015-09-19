@@ -61,7 +61,7 @@ gulp.task('import', function(cb) {
     return;
   }
   gulp.src('')
-    .pipe(shell('babel-node src/importTempDB.js ' + siteSlug))
+    .pipe(shell('node --max-old-space-size=8192 dist/importTempDB.js ' + siteSlug))
     .pipe(es.wait(cb));
 });
 
