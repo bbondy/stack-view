@@ -1,7 +1,7 @@
 let fs = require('fs');
 let path = require('path');
 let PriorityQueue = require('priorityqueuejs');
-import {addUser, addQuestion, addAnswer, getTag, addTag, getUser, getAnswersStream, getQuestionsStream, getAnswer, getAnswers, setStats, uninitDB} from './datastore.js';
+import {addUser, addQuestion, getAnswersStream, getQuestions, getQuestionsStream, addAnswer, getTag, addTag, getUser, getAnswer, getAnswers, setStats, uninitDB} from './datastore.js';
 let strict = true;
 
 const siteSlug = process.argv[2];
@@ -128,12 +128,12 @@ export let parseQuestions = parseFile.bind(null, postsXml, (node) => {
   if (data.postTypeId === 1) {
     data.acceptedAnswerId = Number(node.attributes.AcceptedAnswerId);
     dbStatsTemp.questionCount++;
-    data.page = Math.ceil(dbStatsTemp.questionCount / questionsPerPage);
+    data.page = dbStatsTemp.questionCount; // 1 question per page for temp db
     return addQuestion(siteSlugTemp, data);
   } else if (data.postTypeId === 2) {
     data.parentId = Number(node.attributes.ParentId);
     dbStatsTemp.answerCount++;
-    data.page = Math.ceil(dbStatsTemp.answerCount / questionsPerPage);
+    data.page = dbStatsTemp.answerCount;
     return addAnswer(siteSlugTemp, data);
   }
 });
@@ -169,7 +169,7 @@ function queueQuestion(question) {
 export let selectBestAnswersAndWeigh = () => {
   return new Promise((resolve, reject) => {
     console.log('Selecting best answers and calculating weight');
-    let getQuestionsStreamPromises = [];
+    let getQuestionsPromises = [];
     let getAnswersPromises = [];
     let handleQuestionAndAnswer = (question, bestAnswer) => {
       if (!bestAnswer) {
@@ -182,7 +182,7 @@ export let selectBestAnswersAndWeigh = () => {
       queueQuestion(question);
     };
 
-    let handleGetQuestions = question => {
+    let handleGetQuestion = ([question]) => {
       let addBestAnswer = () => getAnswersPromises.push(getAnswers(siteSlugTemp, baseLang, question.id).then(answers => {
           // Create a PQ for weighing all the answers to find the best one
           let answersPQ = new PriorityQueue((a, b) => {
@@ -218,12 +218,12 @@ export let selectBestAnswersAndWeigh = () => {
       }
     };
 
-    let tempPages = Math.ceil(dbStatsTemp.questionCount / questionsPerPage);
-    for (let i = 0; i < tempPages; i++) {
-      getQuestionsStreamPromises.push(getQuestionsStream(siteSlugTemp, baseLang, { page: i }, handleGetQuestions));
+    let tempPages = dbStatsTemp.questionCount; // Because 1 question per page for temp db
+    for (let i = 1; i <= tempPages; i++) {
+      getQuestionsPromises.push(getQuestions(siteSlugTemp, baseLang, i).then(handleGetQuestion));
     }
     console.log('Waiting for best answers and weight promises');
-    Promise.all(getQuestionsStreamPromises).then(() => {
+    Promise.all(getQuestionsPromises).then(() => {
       return Promise.all(getAnswersPromises);
     }).then(resolve).catch(reject);
   });

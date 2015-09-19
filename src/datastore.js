@@ -35,23 +35,36 @@ sites.forEach(site => {
 
 function set(collection, query, obj) {
   return new Promise((resolve, reject) => {
-    collection.findAndModify(query, obj, (err, data) => {
-      if (err) {
-        reject(err);
-        return;
+    let retries = 0;
+    try {
+      collection.findAndModify(query, obj, { timeout: false }, (err, data) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        if (data) {
+          resolve(data);
+        } else {
+          collection.insert(obj, { timeout: false }, (err2, data2) => {
+            if (err2) {
+              reject(err2);
+              return;
+            }
+            resolve(data2);
+          });
+        }
+      });
+    } catch (e) {
+      retries++;
+      console.error('caught exception in set with', retries, ' retries. Exception:', e);
+      if (e.stack) {
+        console.error(e.stack);
       }
-      if (data) {
-        resolve(data);
-      } else {
-        collection.insert(obj, (err2, data2) => {
-          if (err2) {
-            reject(err2);
-            return;
-          }
-          resolve(data2);
-        });
+      if (retries > 5) {
+        throw e;
       }
-    });
+      return set(collection, query, obj);
+    }
   });
 }
 
@@ -60,13 +73,28 @@ function set(collection, query, obj) {
  */
 function get(collection, query, options) {
   return new Promise((resolve, reject) => {
-    collection.find(query, options, (err, data) => {
-      if (err) {
-        reject(err);
-        return;
+    let retries = 0;
+    try {
+      options = options || {};
+      options.timeout = false;
+      collection.find(query, options, (err, data) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(data);
+      });
+    } catch (e) {
+      retries++;
+      console.error('caught exception in get with', retries, ' retries. Exception:', e);
+      if (e.stack) {
+        console.error(e.stack);
       }
-      resolve(data);
-    });
+      if (retries > 5) {
+        throw e;
+      }
+      return get(collection, query, options);
+    }
   });
 }
 
@@ -75,13 +103,9 @@ function get(collection, query, options) {
  */
 function getOne(collection, query, options) {
   return new Promise((resolve, reject) => {
-    collection.find(query, options, (err, data) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(data ? data[0] : null);
-    });
+    get(collection, query, options).then((data) => {
+      resolve(data[0]);
+    }).catch(reject);
   });
 }
 
@@ -90,7 +114,7 @@ function getOne(collection, query, options) {
  */
 function getStream(collection, filter, eachCB) {
   return new Promise((resolve, reject) => {
-    collection.find(filter, { stream: true })
+    collection.find(filter, { stream: true, timeout: false })
       .each(eachCB)
       .error(reject)
       .success(resolve);
