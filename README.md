@@ -8,9 +8,9 @@ StackOverflow analysis
 
 ##Running
 
-Start the DB server:
+Start the mongo server
 
-`redis-server src/redis.conf`
+Import 1 or more sites as specified in the config.js file.
 
 Start the web server:
 

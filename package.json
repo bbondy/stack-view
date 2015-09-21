@@ -31,7 +31,6 @@
     "node-jsx": "^0.13.3",
     "priorityqueuejs": "^1.0.0",
     "react": "^0.13.3",
-    "redis": "^1.0.0",
     "sax": "^1.1.2",
     "sitemap": "^1.1.1",
     "vision": "^3.0.0",
