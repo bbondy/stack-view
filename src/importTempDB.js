@@ -1,4 +1,5 @@
 let fs = require('fs');
+let es = require('event-stream');
 let path = require('path');
 let PriorityQueue = require('priorityqueuejs');
 import {addUser, addQuestion, getAnswersStream, getQuestions, getQuestionsStream, addAnswer, getTag, addTag, getUser, getAnswer, getAnswers, setStats, uninitDB} from './datastore.js';
@@ -71,6 +72,17 @@ let parseFile = (filePath, onOpenTag) => {
 
     console.log('parsing file: ', filePath);
     fs.createReadStream(filePath)
+      .pipe(es.through(function (data) {
+         this.pause();
+         (function(promisesInternal, dataInternal, stream) {
+           Promise.all(promises).then(function() {
+             promisesInternal.length = 0;
+             stream.emit('data', dataInternal);
+             stream.resume();
+           });
+         })(promises, data, this);
+
+      }))
       .pipe(saxStream);
   });
 };
