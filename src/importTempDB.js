@@ -79,6 +79,7 @@ let parseFile = (filePath, onOpenTag) => {
              promisesInternal.length = 0;
              stream.emit('data', dataInternal);
              stream.resume();
+             console.log('update', dbStatsTemp.questionCount, dbStatsTemp.answerCount, dbStatsTemp.userCount, dbStatsTemp.tagCount);
            });
          })(promises, data, this);
 
@@ -230,6 +231,7 @@ export let selectBestAnswersAndWeigh = () => {
       }
     };
 
+    // TODO: Select this from DB instead of using pre-info to make independant
     let tempPages = dbStatsTemp.questionCount; // Because 1 question per page for temp db
     for (let i = 1; i <= tempPages; i++) {
       getQuestionsPromises.push(getQuestions(siteSlugTemp, baseLang, i).then(handleGetQuestion));
@@ -380,6 +382,17 @@ export let insertStats = () => {
   console.log('Stats:', dbStats);
   return setStats(siteSlug, dbStats);
 };
+
+/*
+parseTags()
+  .then(uninitDB)
+  .catch(err => {
+    console.error('top err: ', err);
+    if (err.stack) {
+      console.error('err.stack: ', err.stack);
+    }
+  });
+*/
 
 parseUsers()
   .then(parseQuestions)
