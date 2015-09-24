@@ -181,9 +181,10 @@ function queueQuestion(question) {
 
 export let selectBestAnswersAndWeigh = () => {
   return new Promise((resolve, reject) => {
-    console.log('Selecting best answers and calculating weight');
-    let getQuestionsPromises = [];
-    let getAnswersPromises = [];
+    console.log('select best answer and weigh');
+    let processedCount = 0;
+    let sequence = Promise.resolve();
+    let getAnswersSequence = Promise.resolve();
     let handleQuestionAndAnswer = (question, bestAnswer) => {
       if (!bestAnswer) {
         return;
@@ -196,7 +197,13 @@ export let selectBestAnswersAndWeigh = () => {
     };
 
     let handleGetQuestion = ([question]) => {
-      let addBestAnswer = () => getAnswersPromises.push(getAnswers(siteSlugTemp, baseLang, question.id).then(answers => {
+      // Log some basic progress every 100
+      if (processedCount % 1000 === 0) {
+        console.log('Processed:', processedCount);
+      }
+      processedCount++;
+      let addBestAnswer = () => {
+        getAnswersSequence = getAnswersSequence.then(getAnswers.bind(null, siteSlugTemp, baseLang, question.id)).then(answers => {
           // Create a PQ for weighing all the answers to find the best one
           let answersPQ = new PriorityQueue((a, b) => {
             if (question.acceptedAnswerId === a.id) {
@@ -216,30 +223,30 @@ export let selectBestAnswersAndWeigh = () => {
             let bestAnswer = answersPQ.deq();
             handleQuestionAndAnswer(question, bestAnswer);
           }
-      }));
+        });
+      };
       if (!question.acceptedAnswerId) {
         addBestAnswer();
       } else {
-        getAnswersPromises.push(getAnswer(siteSlugTemp, baseLang, question.acceptedAnswerId).then(bestAnswer => {
+        getAnswersSequence = getAnswersSequence.then(getAnswer.bind(null, siteSlugTemp, baseLang, question.acceptedAnswerId)).then(bestAnswer => {
           if (bestAnswer) {
             handleQuestionAndAnswer(question, bestAnswer);
           } else {
             console.warn('Best answer for question not found. Question:', question, '. Retrying to add best answer instead.');
             addBestAnswer();
           }
-        }));
+        });
       }
     };
 
     // dbStatsTemp.questionCount is filled by getQuestionsCount
     let tempPages = dbStatsTemp.questionCount; // Because 1 question per page for temp db
     for (let i = 1; i <= tempPages; i++) {
-      getQuestionsPromises.push(getQuestions(siteSlugTemp, baseLang, i).then(handleGetQuestion));
+      sequence = sequence
+        .then(getQuestions.bind(null, siteSlugTemp, baseLang, i))
+        .then(handleGetQuestion);
     }
-    console.log('Waiting for best answers and weight promises');
-    Promise.all(getQuestionsPromises).then(() => {
-      return Promise.all(getAnswersPromises);
-    }).then(resolve).catch(reject);
+    sequence.then(getAnswersSequence).then(resolve).catch(reject);
   });
 };
 
