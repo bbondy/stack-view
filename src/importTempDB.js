@@ -2,7 +2,8 @@ let fs = require('fs');
 let es = require('event-stream');
 let path = require('path');
 let PriorityQueue = require('priorityqueuejs');
-import {addUser, addQuestion, getAnswersStream, getQuestions, getQuestionsStream, addAnswer, getTag, addTag, getUser, getAnswer, getAnswers, setStats, uninitDB} from './datastore.js';
+import {addUser, addQuestion, getAnswersStream, getQuestions, getQuestionsStream, getQuestionsCount, addAnswer, getTag,
+  addTag, getUser, getAnswer, getAnswers, setStats, uninitDB} from './datastore.js';
 let strict = true;
 
 const siteSlug = process.argv[2];
@@ -20,7 +21,6 @@ let tagMap = new Map();
 let bestAnswerIdSet = new Set();
 let userIdSet = new Set();
 let questionIdSet = new Set();
-
 
 class Stats {
   constructor() {
@@ -231,7 +231,7 @@ export let selectBestAnswersAndWeigh = () => {
       }
     };
 
-    // TODO: Select this from DB instead of using pre-info to make independant
+    // dbStatsTemp.questionCount is filled by getQuestionsCount
     let tempPages = dbStatsTemp.questionCount; // Because 1 question per page for temp db
     for (let i = 1; i <= tempPages; i++) {
       getQuestionsPromises.push(getQuestions(siteSlugTemp, baseLang, i).then(handleGetQuestion));
@@ -394,7 +394,10 @@ parseTags()
   });
 */
 
-parseUsers()
+getQuestionsCount(siteSlugTemp).then(result => {
+    dbStatsTemp.questionCount = result;
+  })
+  .then(parseUsers)
   .then(parseQuestions)
   .then(parseTags)
   .then(selectBestAnswersAndWeigh)
