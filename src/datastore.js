@@ -101,6 +101,21 @@ function get(collection, query, options) {
 /**
  * Obtains an object for the key, and deserializes it
  */
+function count(collection, query) {
+  return new Promise((resolve, reject) => {
+    collection.count(query, (err, result) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(result);
+    });
+  });
+}
+
+/**
+ * Obtains an object for the key, and deserializes it
+ */
 function getOne(collection, query, options) {
   return new Promise((resolve, reject) => {
     get(collection, query, options).then((data) => {
@@ -310,6 +325,22 @@ export function getTag(siteSlug, lang, tagName) {
       resolve(tag);
     }).catch(reject);
   });
+}
+
+export function getQuestionsCount(siteSlug, query = {}) {
+  return count(dbInfoMap.get(siteSlug).questions, query);
+}
+
+export function getAnswersCount(siteSlug, query = {}) {
+  return count(dbInfoMap.get(siteSlug).answers, query);
+}
+
+export function getTagsCount(siteSlug, query = {}) {
+  return count(dbInfoMap.get(siteSlug).tags, query);
+}
+
+export function getUsersCount(siteSlug, query = {}) {
+  return count(dbInfoMap.get(siteSlug).users, query);
 }
 
 /**
