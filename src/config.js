@@ -28,7 +28,7 @@ export let sites = [{
   slug: 'stackoverflow',
   seUrl: 'http://stackoverflow.com/',
   langs: ['en', 'fr'],
-  db: 'localhost/programmers',
+  db: 'localhost/stackoverflow',
 }, {
   name: 'Android',
   slug: 'android',
