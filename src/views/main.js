@@ -23,6 +23,7 @@ var Main = React.createClass({
      { this.props.siteBasePage ? <SiteBasePage siteSlug={this.props.siteSlug}/> : null }
      { this.props.questions ? <QuestionsPage siteSlug={this.props.siteSlug}
        lang={this.props.lang}
+       page={Number(this.props.page)}
        questions={this.props.questions} /> : null }
      { this.props.question ? <QuestionPage siteSlug={this.props.siteSlug}
        lang={this.props.lang}

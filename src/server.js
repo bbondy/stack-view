@@ -4,6 +4,7 @@ let Hapi = require('hapi');
 var Inert = require('inert');
 import {getQuestions, getQuestion, getAnswers, getUsers, getUser, getTags} from './datastore.js';
 import {cookiePassword} from './secrets.js';
+import {getQuestionsTitle} from './siteUtil.js';
 
 let port = process.env.PORT || 20119;
 
@@ -44,11 +45,13 @@ let renderReact = function(reply, context) {
 
 let getQuestionsHandler = function(request, reply) {
   getQuestions(request.params.siteSlug, request.params.lang, request.params.page || 1).then(questions => {
+    let page = request.params.page || 1;
     renderReact(reply, {
-      title: 'Questions',
+      title: getQuestionsTitle(request.params.lang, page),
       siteSlug: request.params.siteSlug,
       lang: request.params.lang,
       questions,
+      page,
     });
   }).catch((err) => {
     console.log('questions error:', err);
