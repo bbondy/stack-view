@@ -20,6 +20,7 @@ let newDB = (site, temp) => {
   dbInfo.questions.index('ownerUserId');
   dbInfo.answers.index('id', { unique: true});
   dbInfo.answers.index('id parentId', { unique: true });
+  dbInfo.answers.index('parentId');
   dbInfo.answers.index('ownerUserId');
   dbInfo.users.index('id', { unique: true });
   dbInfo.users.index('page');
