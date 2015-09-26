@@ -180,30 +180,29 @@ function queueQuestion(question) {
 }
 
 export let selectBestAnswersAndWeigh = () => {
-  return new Promise((resolve, reject) => {
-    console.log('select best answer and weigh');
-    let processedCount = 0;
-    let sequence = Promise.resolve();
-    let getAnswersSequence = Promise.resolve();
-    let handleQuestionAndAnswer = (question, bestAnswer) => {
-      if (!bestAnswer) {
-        return;
-      }
-      let wordCount = question.title.split(' ').length + question.body.split(' ').length + bestAnswer.body.split(' ').length;
-      question.bestAnswerId = bestAnswer.id;
-      // Includes the weight of both the best answer and question together
-      question.weight = question.viewCount * 0.01 * 0.25 - wordCount * 0.12;
-      queueQuestion(question);
-    };
+  console.log('select best answer and weigh');
+  let processedCount = 0;
+  let sequence = Promise.resolve();
+  let addQAToPQ = (question, bestAnswer) => {
+    if (!bestAnswer) {
+      return;
+    }
+    let wordCount = question.title.split(' ').length + question.body.split(' ').length + bestAnswer.body.split(' ').length;
+    question.bestAnswerId = bestAnswer.id;
+    // Includes the weight of both the best answer and question together
+    question.weight = question.viewCount * 0.01 * 0.25 - wordCount * 0.12;
+    queueQuestion(question);
+  };
 
-    let handleGetQuestion = ([question]) => {
+  let handleGetQuestion = ([question]) => {
+    return new Promise((resolve) => {
       // Log some basic progress every 100
       if (processedCount % 1000 === 0) {
         console.log('Processed:', processedCount);
       }
       processedCount++;
-      let addBestAnswer = () => {
-        getAnswersSequence = getAnswersSequence.then(getAnswers.bind(null, siteSlugTemp, baseLang, question.id)).then(answers => {
+      let addBestAnswer = (question) => {
+        getAnswers(siteSlugTemp, baseLang, question.id).then(answers => {
           // Create a PQ for weighing all the answers to find the best one
           let answersPQ = new PriorityQueue((a, b) => {
             if (question.acceptedAnswerId === a.id) {
@@ -221,164 +220,154 @@ export let selectBestAnswersAndWeigh = () => {
           // Don't even consider things without answers
           if (answers.length > 0) {
             let bestAnswer = answersPQ.deq();
-            handleQuestionAndAnswer(question, bestAnswer);
+            addQAToPQ(question, bestAnswer);
           }
+          resolve();
         });
       };
+
+      // If there's no accepted ID, call addBestAnswer which gets all the answers and gets the best scored one.
       if (!question.acceptedAnswerId) {
-        addBestAnswer();
+        addBestAnswer(question);
       } else {
-        getAnswersSequence = getAnswersSequence.then(getAnswer.bind(null, siteSlugTemp, baseLang, question.acceptedAnswerId)).then(bestAnswer => {
+        getAnswer(siteSlugTemp, baseLang, question.acceptedAnswerId).then(bestAnswer => {
+          // Sometimes the best answer can't be found (deleted or not present in the dump), so fall back to add the best answer in that case.
           if (bestAnswer) {
-            handleQuestionAndAnswer(question, bestAnswer);
+            addQAToPQ(question, bestAnswer);
+            resolve();
           } else {
             console.warn('Best answer for question not found. Question:', question, '. Retrying to add best answer instead.');
-            addBestAnswer();
+            addBestAnswer(question);
           }
         });
       }
-    };
+    });
+  };
 
-    // dbStatsTemp.questionCount is filled by getQuestionsCount
-    let tempPages = dbStatsTemp.questionCount; // Because 1 question per page for temp db
-    for (let i = 1; i <= tempPages; i++) {
-      sequence = sequence
-        .then(getQuestions.bind(null, siteSlugTemp, baseLang, i))
-        .then(handleGetQuestion);
-    }
-    sequence.then(getAnswersSequence).then(resolve).catch(reject);
-  });
+  // dbStatsTemp.questionCount is filled by getQuestionsCount
+  let tempPages = dbStatsTemp.questionCount; // Because 1 question per page for temp db
+  console.log('temp pages:', tempPages);
+  for (let i = 1; i <= tempPages; i++) {
+    sequence = sequence.then(getQuestions.bind(null, siteSlugTemp, baseLang, i));
+    sequence = sequence.then(handleGetQuestion);
+  }
+  return sequence;
 };
 
 export let insertBestQuestions = () => {
-  return new Promise((resolve, reject) => {
-    console.log('Inserting best questions');
-    let promises = [];
-    let addTagFn = tagName => {
-      let tagCount = 0;
-      if (tagMap.has(tagName)) {
-        tagCount = tagMap.get(tagName);
-      }
-      tagMap.set(tagName, tagCount + 1);
-    };
-
-    console.log('PQ size is: ', pq.size());
-    while (!pq.isEmpty()) {
-      let question = pq.deq();
-      questionIdSet.add(question.id);
-      // ownerUserId won't be set for community wiki
-      if (question.ownerUserId) {
-        userIdSet.add(question.ownerUserId);
-      }
-      if (question.bestAnswerId) {
-        bestAnswerIdSet.add(question.bestAnswerId);
-      }
-      if (question.tags) {
-        // Split up tags like <tag1><tag2><tag3> into an array of strings iwth the tag names
-        // Do this by replacing the starting < and the ending > with nothing, then split on the middle ><
-        question.tags = question.tags.replace(/^</, '').replace(/>$/, '').split('><');
-        question.tags.forEach(addTagFn);
-      }
-
-      dbStats.questionWordCount += question.title.split(' ').length + question.body.split(' ').length;
-      if (question.viewCount) {
-        dbStats.questionViews += question.viewCount;
-      }
-      dbStats.totalWeight += question.weight;
-
-      // Add in the page for per page querying
-      question.page = Math.ceil(questionIdSet.size / questionsPerPage);
-
-      promises.push(addQuestion(siteSlug, question));
+  let sequence = Promise.resolve();
+  let addTagFn = tagName => {
+    let tagCount = 0;
+    if (tagMap.has(tagName)) {
+      tagCount = tagMap.get(tagName);
     }
-    console.log('waiting for all questions to insert: ', promises.length);
-    Promise.all(promises).then(resolve).catch(reject);
-  });
+    tagMap.set(tagName, tagCount + 1);
+  };
+
+  while (!pq.isEmpty()) {
+    let question = pq.deq();
+    questionIdSet.add(question.id);
+    // ownerUserId won't be set for community wiki
+    if (question.ownerUserId) {
+      userIdSet.add(question.ownerUserId);
+    }
+    if (question.bestAnswerId) {
+      bestAnswerIdSet.add(question.bestAnswerId);
+    }
+    if (question.tags) {
+      // Split up tags like <tag1><tag2><tag3> into an array of strings iwth the tag names
+      // Do this by replacing the starting < and the ending > with nothing, then split on the middle ><
+      question.tags = question.tags.replace(/^</, '').replace(/>$/, '').split('><');
+      question.tags.forEach(addTagFn);
+    }
+
+    dbStats.questionWordCount += question.title.split(' ').length + question.body.split(' ').length;
+    if (question.viewCount) {
+      dbStats.questionViews += question.viewCount;
+    }
+    dbStats.totalWeight += question.weight;
+
+    // Add in the page for per page querying
+    question.page = Math.ceil(questionIdSet.size / questionsPerPage);
+
+    sequence = sequence.then(addQuestion.bind(null, siteSlug, question));
+  }
+  console.log('waiting for all questions to insert');
+  return sequence;
 };
 
 export let insertBestAnswers = () => {
-  return new Promise((resolve, reject) => {
-    console.log('Inserting answers');
-    let getAnswerPromises = [];
-    let addAnswerPromises = [];
-    bestAnswerIdSet.forEach(answerId => {
-      getAnswerPromises.push(getAnswer(siteSlugTemp, baseLang, answerId).then(answer => {
-        dbStats.answerWordCount += answer.body.split(' ').length;
-        if (answer.ownerUserId) {
-          userIdSet.add(answer.ownerUserId);
-        }
-        addAnswerPromises.push(addAnswer(siteSlug, answer));
-      }));
+  console.log('Inserting answers');
+  let sequence = Promise.resolve();
+  bestAnswerIdSet.forEach(answerId => {
+    sequence = sequence.then(getAnswer.bind(null, siteSlugTemp, baseLang, answerId));
+    sequence = sequence.then(answer => {
+      dbStats.answerWordCount += answer.body.split(' ').length;
+      if (answer.ownerUserId) {
+        userIdSet.add(answer.ownerUserId);
+      }
+      return answer;
     });
-    Promise.all(getAnswerPromises).then(() => {
-      return Promise.all(addAnswerPromises);
-    }).then(resolve).catch(reject);
+    sequence = sequence.then((answer) => addAnswer.bind(null, siteSlug, answer));
   });
+  return sequence;
 };
 
 export let insertUsers = () => {
-  return new Promise((resolve, reject) => {
-    console.log('Inserting users');
-    let getUsersPromises = [];
-    let addUsersPromises = [];
-    let addPostPromises = [];
-    let getPostPromises = [];
-    let i = 0;
-    userIdSet.forEach(userId => {
-      getUsersPromises.push(getUser(siteSlugTemp, baseLang, userId).then(user => {
-        if (user.aboutMe) {
-          dbStats.userWordCount += user.aboutMe.split(' ').length;
-        }
-
-        // Add in the page for per page querying
-        user.page = Math.ceil(++i / usersPerPage);
-
-        // Update all of the questions with the user info
-        getPostPromises.push(getQuestionsStream(siteSlug, baseLang, { ownerUserId: user.id }, question => {
-          question.ownerDisplayName = user.displayName;
-          addPostPromises.push(addQuestion(siteSlug, question));
-        }));
-
-        // Update all of the answers with the user info
-        getPostPromises.push(getAnswersStream(siteSlug, baseLang, { ownerUserId: user.id }, answer => {
-          answer.ownerDisplayName = user.displayName;
-          addPostPromises.push(addAnswer(siteSlug, answer));
-        }));
-
-
-        addUsersPromises.push(addUser(siteSlug, user));
-      }));
+  console.log('Inserting users');
+  let sequence = Promise.resolve();
+  let i = 0;
+  userIdSet.forEach(userId => {
+    sequence = sequence.then(getUser.bind(null, siteSlugTemp, baseLang, userId));
+    sequence = sequence.then(user => {
+      if (user.aboutMe) {
+        dbStats.userWordCount += user.aboutMe.split(' ').length;
+      }
+      // Add in the page for per page querying
+      user.page = Math.ceil(++i / usersPerPage);
+      return user;
     });
-    console.log('Waiting for users to insert');
-    Promise.all(getUsersPromises).then(() => {
-      console.log('Waiting for add users promises');
-      return Promise.all(addUsersPromises);
-    }).then(() => {
-      console.log('Waiting for questions promises');
-      return Promise.all(getPostPromises);
-    }).then(() => {
-      console.log('Waiting for update questions promises');
-      return Promise.all(addPostPromises);
-    }).then(resolve).catch(reject);
+
+    // Update all of the questions with the user info
+    sequence = sequence.then((user) => {
+      return new Promise((resolve, reject) => {
+        let promises = [];
+        getQuestionsStream(siteSlug, baseLang, { ownerUserId: user.id }, question => {
+          question.ownerDisplayName = user.displayName;
+          promises.push(addQuestion.bind(null, siteSlug, question));
+        }).then(Promise.all(promises)).then(resolve.bind(null, user)).catch(reject);
+      });
+    });
+
+    // Update all of the answers with the user info
+    sequence = sequence.then((user) => {
+      return new Promise((resolve, reject) => {
+        let promises = [];
+        getAnswersStream(siteSlug, baseLang, { ownerUserId: user.id }, answer => {
+          answer.ownerDisplayName = user.displayName;
+          promises.push(addAnswer.bind(null, siteSlug, answer));
+        }).then(Promise.all(promises)).then(resolve.bind(null, user)).catch(reject);
+      });
+    });
+
+    sequence = sequence.then((user) => addUser(siteSlug, user));
   });
+  return sequence;
 };
 
 export let insertTags = () => {
-  return new Promise((resolve, reject) => {
-    console.log('Inserting tags');
-    let getTagPromises = [];
-    let addTagPromises = [];
-    tagMap.forEach((tagCount, tagName) => {
-      getTagPromises.push(getTag(siteSlugTemp, baseLang, tagName).then(tag => {
-        tag.count = tagCount;
-        addTagPromises.push(addTag(siteSlug, tag));
-      }));
+  console.log('Inserting tags');
+  let sequence = Promise.resolve();
+  tagMap.forEach((tagCount, tagName) => {
+    sequence = sequence.then(getTag.bind(null, siteSlugTemp, baseLang, tagName));
+    sequence = sequence.then(tag => {
+      tag.count = tagCount;
+      return tag;
     });
-    console.log('Waiting for tags to insert');
-    Promise.all(getTagPromises).then(() => {
-      return Promise.all(addTagPromises);
-    }).then(resolve).catch(reject);
+    sequence = sequence.then((tag) => addTag(siteSlug, tag));
   });
+  console.log('Waiting for tags to insert');
+  return sequence;
 };
 
 export let insertStats = () => {
