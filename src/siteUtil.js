@@ -3,11 +3,14 @@ import {sites} from './config.js';
 export const siteUrl = (siteSlug, lang) => lang !== undefined ? `/${siteSlug}/${lang}` : `/${siteSlug}`;
 
 export const userUrl = (siteSlug, lang, userId) => userId !== undefined ? `/${siteSlug}/${lang}/users/${userId}` : `/${siteSlug}/${lang}/users`;
+export const usersUrl = (siteSlug, lang, page) => page === 1 ? `/${siteSlug}/${lang}/users` : `/${siteSlug}/${lang}/users/page/${page}`;
 export const questionUrl = (siteSlug, lang, questionId) => questionId !== undefined ? `/${siteSlug}/${lang}/questions/${questionId}` : `/${siteSlug}/${lang}/questions`;
 export const questionsUrl = (siteSlug, lang, page) => page === 1 ? `/${siteSlug}/${lang}/questions` : `/${siteSlug}/${lang}/questions/page/${page}`;
 export const tagsUrl = (siteSlug, lang) => `/${siteSlug}/${lang}/tags`;
 export const nextQuestionsUrl = (siteSlug, lang, page) => questionsUrl(siteSlug, lang, page + 1);
 export const backQuestionsUrl = (siteSlug, lang, page) => questionsUrl(siteSlug, lang, page - 1);
+export const nextUsersUrl = (siteSlug, lang, page) => usersUrl(siteSlug, lang, page + 1);
+export const backUsersUrl = (siteSlug, lang, page) => usersUrl(siteSlug, lang, page - 1);
 
 export const seUserUrl = (siteSlug, userId) => {
   let foundSite = sites.find(site => siteSlug === site.slug);
@@ -24,3 +27,4 @@ export const siteLangs = (siteSlug) => {
 };
 
 export const getQuestionsTitle = (lang, page) => page === 1 ? "Questions" : `Questions page ${page}`;
+export const getUsersTitle = (lang, page) => page === 1 ? "Users" : `Users page ${page}`;

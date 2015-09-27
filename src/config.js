@@ -1,5 +1,6 @@
 export let baseUrl = 'http://rosettastack.com';
 export let questionsPerPage = 5;
+export let usersPerPage = 5;
 export let sites = [{
   name: 'Programmers',
   slug: 'programmers',

@@ -31,6 +31,7 @@ var Main = React.createClass({
        answers={this.props.answers}/> : null }
      { this.props.users ? <UsersPage siteSlug={this.props.siteSlug}
        lang={this.props.lang}
+       page={Number(this.props.page)}
        users={this.props.users} /> : null }
      { this.props.user ? <UserPage siteSlug={this.props.siteSlug}
        lang={this.props.lang}

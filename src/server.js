@@ -4,7 +4,7 @@ let Hapi = require('hapi');
 var Inert = require('inert');
 import {getQuestions, getQuestion, getAnswers, getUsers, getUser, getTags} from './datastore.js';
 import {cookiePassword} from './secrets.js';
-import {getQuestionsTitle} from './siteUtil.js';
+import {getQuestionsTitle, getUsersTitle} from './siteUtil.js';
 
 let port = process.env.PORT || 20119;
 
@@ -44,8 +44,8 @@ let renderReact = function(reply, context) {
 };
 
 let getQuestionsHandler = function(request, reply) {
-  getQuestions(request.params.siteSlug, request.params.lang, request.params.page || 1).then(questions => {
-    let page = request.params.page || 1;
+  let page = request.params.page || 1;
+  getQuestions(request.params.siteSlug, request.params.lang, page).then(questions => {
     renderReact(reply, {
       title: getQuestionsTitle(request.params.lang, page),
       siteSlug: request.params.siteSlug,
@@ -59,12 +59,14 @@ let getQuestionsHandler = function(request, reply) {
 };
 
 let getUsersHandler = function(request, reply) {
-  getUsers(request.params.siteSlug, request.params.lang, request.params.page || 1).then(users => {
+  let page = request.params.page || 1;
+  getUsers(request.params.siteSlug, request.params.lang, page).then(users => {
     renderReact(reply, {
-      title: 'Users',
+      title: getUsersTitle(request.params.lang, page),
       siteSlug: request.params.siteSlug,
       lang: request.params.lang,
       users,
+      page,
     });
   }).catch((err) => {
     console.log('users error:', err);
