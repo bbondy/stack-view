@@ -164,7 +164,7 @@ server.route({
         user,
       });
     }).catch((err) => {
-      console.log('question error:', err);
+      console.log('users error:', err);
     });
   }
 });
@@ -193,7 +193,7 @@ server.route({
     getQuestion(request.params.siteSlug, request.params.lang, request.params.id).then((answers) => {
       reply(answers).code(200);
     }).catch((err) => {
-      console.log('question error: !', err);
+      console.log('api question error: !', err);
     });
   }
 });
@@ -205,7 +205,7 @@ server.route({
     getAnswers(request.params.siteSlug, request.params.lang, request.params.id).then((answers) => {
       reply(answers).code(200);
     }).catch((err) => {
-      console.log('question error: !', err);
+      console.log('api answers error: !', err);
     });
   }
 });

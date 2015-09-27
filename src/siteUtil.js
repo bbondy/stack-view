@@ -26,5 +26,5 @@ export const siteLangs = (siteSlug) => {
   return foundSite.langs;
 };
 
-export const getQuestionsTitle = (lang, page) => page === 1 ? "Questions" : `Questions page ${page}`;
-export const getUsersTitle = (lang, page) => page === 1 ? "Users" : `Users page ${page}`;
+export const getQuestionsTitle = (lang, page) => page === 1 ? 'Questions' : `Questions page ${page}`;
+export const getUsersTitle = (lang, page) => page === 1 ? 'Users' : `Users page ${page}`;

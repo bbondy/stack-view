@@ -150,7 +150,7 @@ export function setStats(siteSlug, stats) {
  * Note that there is only 1 entry total, not 1 per language.
  */
 export function addQuestion(siteSlug, question) {
-  return set(dbInfoMap.get(siteSlug).questions, { id: question.id }, question);
+  return set(dbInfoMap.get(siteSlug).questions, { id: Number(question.id) }, question);
 }
 
 /**
@@ -158,7 +158,7 @@ export function addQuestion(siteSlug, question) {
  * Note that there is only 1 entry total, not 1 per language.
  */
 export function addAnswer(siteSlug, answer) {
-  return set(dbInfoMap.get(siteSlug).answers, { id: answer.id, parentId: answer.parentId }, answer);
+  return set(dbInfoMap.get(siteSlug).answers, { id: Number(answer.id), parentId: answer.parentId }, answer);
 }
 
 /**
@@ -166,7 +166,7 @@ export function addAnswer(siteSlug, answer) {
  * Note that there is only 1 entry total, not 1 per language.
  */
 export function addUser(siteSlug, user) {
-  return set(dbInfoMap.get(siteSlug).users, { id: user.id}, user);
+  return set(dbInfoMap.get(siteSlug).users, { id: Number(user.id)}, user);
 }
 
 /**
@@ -236,7 +236,7 @@ export function getStats(siteSlug) {
  */
 export function getQuestion(siteSlug, lang, questionId) {
   return new Promise((resolve, reject) => {
-    getOne(dbInfoMap.get(siteSlug).questions, { id: questionId }).then(question => {
+    getOne(dbInfoMap.get(siteSlug).questions, { id: Number(questionId) }).then(question => {
       // TODO: normalize question to localized format
       resolve(question);
     }).catch(reject);
@@ -276,7 +276,7 @@ export function getUsers(siteSlug, lang, page) {
  */
 export function getAnswer(siteSlug, lang, answerId) {
   return new Promise((resolve, reject) => {
-    getOne(dbInfoMap.get(siteSlug).answers, { id: answerId }).then(answer => {
+    getOne(dbInfoMap.get(siteSlug).answers, { id: Number(answerId) }).then(answer => {
       // TODO: normalize answers to localized format
       resolve(answer);
     }).catch(reject);
@@ -289,7 +289,7 @@ export function getAnswer(siteSlug, lang, answerId) {
  */
 export function getAnswers(siteSlug, lang, questionId) {
   return new Promise((resolve, reject) => {
-    get(dbInfoMap.get(siteSlug).answers, { parentId: questionId }, { sort: { score: -1 }} ).then(answers => {
+    get(dbInfoMap.get(siteSlug).answers, { parentId: Number(questionId) }, { sort: { score: -1 }} ).then(answers => {
       // TODO: normalize answers to localized format
       resolve(answers);
     }).catch(reject);
@@ -302,7 +302,7 @@ export function getAnswers(siteSlug, lang, questionId) {
  */
 export function getUser(siteSlug, lang, userId) {
   return new Promise((resolve, reject) => {
-    getOne(dbInfoMap.get(siteSlug).users, { id: userId }).then(user => {
+    getOne(dbInfoMap.get(siteSlug).users, { id: Number(userId) }).then(user => {
       // TODO: normalize user to localized format
       resolve(user);
     }).catch(reject);
