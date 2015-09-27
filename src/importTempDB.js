@@ -201,7 +201,7 @@ export let selectBestAnswersAndWeigh = () => {
         console.log('Processed:', processedCount);
       }
       processedCount++;
-      let addBestAnswer = (question) => {
+      let addBestAnswer = () => {
         getAnswers(siteSlugTemp, baseLang, question.id).then(answers => {
           // Create a PQ for weighing all the answers to find the best one
           let answersPQ = new PriorityQueue((a, b) => {
@@ -228,7 +228,7 @@ export let selectBestAnswersAndWeigh = () => {
 
       // If there's no accepted ID, call addBestAnswer which gets all the answers and gets the best scored one.
       if (!question.acceptedAnswerId) {
-        addBestAnswer(question);
+        addBestAnswer();
       } else {
         getAnswer(siteSlugTemp, baseLang, question.acceptedAnswerId).then(bestAnswer => {
           // Sometimes the best answer can't be found (deleted or not present in the dump), so fall back to add the best answer in that case.
@@ -237,7 +237,7 @@ export let selectBestAnswersAndWeigh = () => {
             resolve();
           } else {
             console.warn('Best answer for question not found. Question:', question, '. Retrying to add best answer instead.');
-            addBestAnswer(question);
+            addBestAnswer();
           }
         });
       }
@@ -308,7 +308,7 @@ export let insertBestAnswers = () => {
       }
       return answer;
     });
-    sequence = sequence.then((answer) => addAnswer.bind(null, siteSlug, answer));
+    sequence = sequence.then((answer) => addAnswer(siteSlug, answer));
   });
   return sequence;
 };

@@ -158,7 +158,7 @@ export function addQuestion(siteSlug, question) {
  * Note that there is only 1 entry total, not 1 per language.
  */
 export function addAnswer(siteSlug, answer) {
-  return set(dbInfoMap.get(siteSlug).answers, { id: Number(answer.id), parentId: answer.parentId }, answer);
+  return set(dbInfoMap.get(siteSlug).answers, { id: Number(answer.id), parentId: Number(answer.parentId) }, answer);
 }
 
 /**
