@@ -1,5 +1,8 @@
-@controlBg: #999;
-@controlBorder: 1px solid #555;
+@controlBg: #444;
+@controlBorder: 1px solid #686868;
+@lightBlue: #9bc5cf;
+@titleColor: @lightBlue;
+@controlHoverColor: @lightBlue;
 
 .se-backlink {
   color: black;
@@ -16,7 +19,7 @@ html, body {
 h1 {
   font-size: 32px;
   padding-bottom: 0;
-  color: #9bc5cf;
+  color: @titleColor;
 }
 
 h2 {
@@ -49,6 +52,10 @@ h2 {
       padding: 10px;
       line-height: 1.6;
       text-decoration: none;
+
+      &:hover {
+        color: @controlHoverColor;
+      }
     }
   }
   li + li {
