@@ -3,6 +3,7 @@
 @lightBlue: #9bc5cf;
 @titleColor: @lightBlue;
 @controlHoverColor: @lightBlue;
+@footerColor: @controlBg;
 
 .se-backlink {
   color: black;
@@ -11,9 +12,19 @@
 
 html, body {
   background-color: #edebec;
-  max-width: 890px;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.mainBody {
+  flex: 1;
+  margin: 0 auto;
+  width: 800px;
 }
 
 h1 {
@@ -60,5 +71,32 @@ h2 {
   }
   li + li {
     margin-left: 10px;
+  }
+}
+
+.footer {
+  text-align: center;
+  background-color: @footerColor;
+  color: #fff;
+  margin: 0 0 20px 0;
+  padding: 0;
+  width: 100%;
+
+  a {
+    color: white;
+    padding: 10px 10px;
+    line-height: 30px;
+    text-decoration: none;
+
+    &:hover {
+      color: @controlHoverColor;
+    }
+
+    &.current {
+      background-color: @controlHoverColor;
+      &:hover {
+        color: black;
+      }
+    }
   }
 }
