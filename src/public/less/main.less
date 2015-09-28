@@ -1,3 +1,6 @@
+@controlBg: #999;
+@controlBorder: 1px solid #555;
+
 .se-backlink {
   color: black;
   margin-left: 10px;
@@ -5,6 +8,9 @@
 
 html, body {
   background-color: #edebec;
+  max-width: 890px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 h1 {
@@ -25,7 +31,27 @@ h2 {
   padding-bottom: 20px;
   padding-left: 20px;
   padding-right: 20px;
-  margin-top: 30px;
+  margin-top: 20px;
   margin-bottom: 30px;
   border-radius: 25px;
+}
+
+.navigationBar {
+  margin: 20px 0;
+  padding: 0;
+  text-align: right;
+  li {
+    background-color: @controlBg;
+    border: @controlBorder;
+    display: inline-block;
+    a {
+      color: white;
+      padding: 10px;
+      line-height: 1.6;
+      text-decoration: none;
+    }
+  }
+  li + li {
+    margin-left: 10px;
+  }
 }

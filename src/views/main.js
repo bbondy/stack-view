@@ -7,6 +7,7 @@ import TagPage from './tagPage.js';
 import SitePerLangPage from './sitePerLangPage.js';
 import SiteBasePage from './siteBasePage.js';
 import IndexPage from './indexPage.js';
+import NavigationBar from './navigationBar.js';
 
 var Main = React.createClass({
   render: function () {
@@ -18,6 +19,8 @@ var Main = React.createClass({
         <script src='/static/js/analytics.js' async='async'/>
      </head>
      <body>
+     { this.props.siteSlug && this.props.lang ?
+      <NavigationBar siteSlug={this.props.siteSlug} lang={this.props.lang}/> : null }
      { this.props.siteLangPage ? <SitePerLangPage siteSlug={this.props.siteSlug}
        lang={this.props.lang}/> : null }
      { this.props.siteBasePage ? <SiteBasePage siteSlug={this.props.siteSlug}/> : null }
