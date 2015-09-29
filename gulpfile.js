@@ -52,6 +52,16 @@ gulp.task('start-server', function() {
   server.listen( { path: './dist/server.js' } );
 });
 
+// TODO
+gulp.task('import-question', function(cb) {
+});
+gulp.task('import-answer', function(cb) {
+});
+gulp.task('export-question', function(cb) {
+});
+gulp.task('export-answer', function(cb) {
+});
+
 
 gulp.task('import', function(cb) {
   var options = minimist(process.argv.slice(2));
