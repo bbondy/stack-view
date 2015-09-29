@@ -1,6 +1,7 @@
 var monk = require('monk');
 
 import {sites} from './config.js';
+import {codify, decodify} from './codify.js';
 
 let dbInfoMap = new Map();
 
@@ -238,11 +239,14 @@ export function getQuestion(siteSlug, lang, questionId) {
   return new Promise((resolve, reject) => {
     getOne(dbInfoMap.get(siteSlug).questions, { id: Number(questionId) }).then(question => {
       // TODO: normalize question to localized format
-      resolve(question);
+      // TODO: This codify/decodify is just for testing for now
+      decodify(question.body).then(data => {
+        question.body = codify(data.normalizedBody, data.snippetsHTML);
+        resolve(question);
+      });
     }).catch(reject);
   });
 }
-
 
 /**
  * Obtains all questions from the DB.
