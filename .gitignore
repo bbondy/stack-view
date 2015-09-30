@@ -37,3 +37,6 @@ secrets.js
 
 # Data dumps location
 data
+
+# Temp dir used for exports
+translations
