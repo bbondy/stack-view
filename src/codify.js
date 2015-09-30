@@ -8,7 +8,7 @@ export function decodify(html) {
       let snippetsHTML = [];
       snippets.forEach((snippet, i) => {
         snippetsHTML.push(snippet.outerHTML);
-        snippet.innerHTML = `{CODE_${i + 1}}`;
+        snippet.outerHTML = `{CODE_${i + 1}}`;
       });
       convertedHTML = window.document.documentElement.outerHTML;
       resolve({

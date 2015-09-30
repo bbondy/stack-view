@@ -53,13 +53,23 @@ gulp.task('start-server', function() {
 });
 
 // TODO
-gulp.task('import-question', function(cb) {
+gulp.task('import-questions', function(cb) {
 });
-gulp.task('import-answer', function(cb) {
+gulp.task('import-answers', function(cb) {
 });
-gulp.task('export-question', function(cb) {
+gulp.task('export-questions', function(cb) {
+  var options = minimist(process.argv.slice(2));
+  var siteSlug = options.s;
+  if (!siteSlug) {
+    console.error('Usage: gulp export-questions -s <siteSlug>');
+    return;
+  }
+  gulp.src('')
+    .pipe(shell('node --max-old-space-size=16384 dist/exportQuestions.js ' + siteSlug))
+    .pipe(es.wait(cb));
+
 });
-gulp.task('export-answer', function(cb) {
+gulp.task('export-answers', function(cb) {
 });
 
 
