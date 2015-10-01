@@ -54,6 +54,15 @@ gulp.task('start-server', function() {
 
 // TODO
 gulp.task('import-translations', function(cb) {
+  var options = minimist(process.argv.slice(2));
+  var siteSlug = options.s;
+  if (!siteSlug) {
+    console.error('Usage: gulp import-translations -s <siteSlug>');
+    return;
+  }
+  gulp.src('')
+    .pipe(shell('node --max-old-space-size=16384 dist/importTranslations.js ' + siteSlug))
+    .pipe(es.wait(cb));
 });
 
 gulp.task('export-translations', function(cb) {
