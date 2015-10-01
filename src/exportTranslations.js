@@ -2,18 +2,8 @@ const siteSlug = process.argv[2];
 const fs = require('fs');
 import { getQuestionsStream, getAnswersStream, uninitDB } from './datastore.js';
 import { decodify } from './codify.js';
+import { createDirs } from './fsUtil.js';
 const baseLang = 'en';
-
-function createDirs(dir) {
-  let subdirs = dir.split('/').splice(1);
-  let path = './';
-  subdirs.forEach(subdir => {
-    path += `${subdir}/`;
-    if (!fs.existsSync(path)) {
-      fs.mkdirSync(path);
-    }
-  });
-}
 
 let sequence = Promise.resolve();
 
