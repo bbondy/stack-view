@@ -4,18 +4,25 @@ import { getQuestionsStream, getAnswersStream, uninitDB } from './datastore.js';
 import { decodify } from './codify.js';
 const baseLang = 'en';
 
+function createDirs(dir) {
+  let subdirs = dir.split('/').splice(1);
+  let path = './';
+  subdirs.forEach(subdir => {
+    path += `${subdir}/`;
+    if (!fs.existsSync(path)) {
+      fs.mkdirSync(path);
+    }
+  });
+}
+
 let sequence = Promise.resolve();
+
 sequence = sequence.then(getQuestionsStream.bind(null, siteSlug, baseLang, { }, question => {
-  if (!fs.existsSync('./translations')) {
-    fs.mkdirSync('./translations');
-  }
-  if (!fs.existsSync(`./translations/${siteSlug}`)) {
-    fs.mkdirSync(`./translations/${siteSlug}`);
-  }
+  createDirs(`./translations/export/${siteSlug}`);
   sequence = sequence.then(decodify.bind(null, question.body));
   sequence = sequence.then(data => {
-    fs.writeFileSync(`./translations/${siteSlug}/q${question.id}.html`, data.normalizedBody);
-    fs.writeFileSync(`./translations/${siteSlug}/t${question.id}.html`, question.title);
+    fs.writeFileSync(`./translations/export/${siteSlug}/q${question.id}.html`, data.normalizedBody);
+    fs.writeFileSync(`./translations/export/${siteSlug}/t${question.id}.html`, question.title);
   });
 }));
 
