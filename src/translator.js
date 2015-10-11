@@ -4,8 +4,8 @@ import {mstranslatorClientID, mstranslatorSecret} from './secrets.js';
 // Second parameter to constructor (true) indicates that
 // the token should be auto-generated.
 var client = new MsTranslator({
-  client_id: mstranslatorClientID,
-  client_secret: mstranslatorSecret
+  client_id: mstranslatorClientID, // eslint-disable-line camelcase
+  client_secret: mstranslatorSecret // eslint-disable-line camelcase
 }, true);
 
 export function translate(text, from, to) {

@@ -314,7 +314,7 @@ export function getUser(siteSlug, lang, userId) {
 }
 
 
-export function getTags(siteSlug, lang) {
+export function getTags(siteSlug/*, lang*/) {
   return new Promise((resolve, reject) => {
     get(dbInfoMap.get(siteSlug).tags, {} ,{sort: { tagName: 1 }}).then(tags => {
       // TODO: normalize tags to localized format

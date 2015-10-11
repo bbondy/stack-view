@@ -97,9 +97,9 @@
       2,
       "inside"
     ],
+    "jsx-quotes": [2, "prefer-single"],
     "react/display-name": 0,
     "react/jsx-boolean-value": 1,
-    "react/jsx-quotes": 1,
     "react/jsx-no-undef": 1,
     "react/jsx-sort-props": 0,
     "react/jsx-sort-prop-types": 0,

@@ -6,7 +6,7 @@ var User = React.createClass({
     return <div>
       { !this.props.id ? <span>community wiki</span> : <span>
           <a href={userUrl(this.props.siteSlug, this.props.lang, this.props.id)}>{this.props.displayName}</a>
-          <a href={seUserUrl(this.props.siteSlug, this.props.id)}><span className="se-backlink fa fa-stack-overflow"/></a>
+          <a href={seUserUrl(this.props.siteSlug, this.props.id)}><span className='se-backlink fa fa-stack-overflow'/></a>
       </span>
       }
   </div>;

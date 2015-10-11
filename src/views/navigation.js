@@ -10,12 +10,12 @@ export var Button = React.createClass({
 
 export var BackButton = React.createClass({
   render: function() {
-    return <Button text="Back" href={this.props.href} />;
+    return <Button text='Back' href={this.props.href} />;
   }
 });
 
 export var NextButton = React.createClass({
   render: function() {
-    return <Button text="Next" href={this.props.href} />;
+    return <Button text='Next' href={this.props.href} />;
   }
 });
